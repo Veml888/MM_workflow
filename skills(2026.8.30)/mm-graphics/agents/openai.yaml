@@ -1,0 +1,4 @@
+interface:
+  display_name: "数学建模论文非数据图"
+  short_description: "生成 CUMCM 论文的逻辑/框架/机理图（TikZ）与视觉示意图（imagegen）"
+  default_prompt: "使用 $mm-graphics 按插图需求清单绘制克制、严谨的 CUMCM 论文图；逻辑/框架/机理图用 TikZ（矢量 PDF + 600DPI PNG），视觉示意图用 imagegen（自由配色、事实准确）；完成边界锚点、物理字号、连线视觉审查并登记对应报告。"

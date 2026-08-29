@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720"
+     role="img" aria-labelledby="title desc" data-diagram-type="technical-route" data-layout="layered"
+     font-family="Microsoft YaHei, SimHei, Noto Sans CJK SC, Source Han Sans SC, sans-serif">
+  <title id="title">数据处理、模型构建与检验的技术路线</title>
+  <desc id="desc">从原始数据到清洗和特征构造，再进入模型构建、求解与检验；未通过时反馈修正模型。</desc>
+  <rect width="1200" height="720" fill="#ffffff" data-decoration="true"/>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7"
+            markerUnits="strokeWidth" orient="auto">
+      <path d="M1 1 L9 5 L1 9 Z" fill="#3f444a"/>
+    </marker>
+  </defs>
+
+  <g fill="none" stroke="#d2d5d8" stroke-width="1.5" data-decoration="true">
+    <path d="M380 72 V680"/><path d="M780 72 V680"/>
+  </g>
+  <g fill="#202124" font-size="28" font-weight="600">
+    <text x="200" y="58" text-anchor="middle">数据准备</text>
+    <text x="580" y="58" text-anchor="middle">模型建立与求解</text>
+    <text x="970" y="58" text-anchor="middle">模型检验与输出</text>
+  </g>
+
+  <g stroke="#3f444a" stroke-width="2" fill="#ffffff">
+    <rect id="n_raw" data-node="true" data-role="input" x="80" y="100" width="240" height="80"/>
+    <rect id="n_clean" data-node="true" data-role="process" x="80" y="270" width="240" height="80" fill="#f5f6f7"/>
+    <rect id="n_feature" data-node="true" data-role="output" x="80" y="440" width="240" height="80"/>
+    <rect id="n_model" data-node="true" data-role="process" x="450" y="200" width="260" height="90" fill="#f3f6f8"/>
+    <rect id="n_solve" data-node="true" data-role="process" x="450" y="420" width="260" height="90" fill="#f3f6f8"/>
+    <polygon id="n_check" data-node="true" data-role="decision" points="940,420 1030,465 940,510 850,465" fill="#ffffff"/>
+    <rect id="n_output" data-node="true" data-role="output" x="850" y="590" width="240" height="80" fill="#f3f6f4"/>
+  </g>
+
+  <g fill="none" stroke="#3f444a" stroke-width="2" marker-end="url(#arrow)">
+    <path id="e_raw_clean" data-edge="true" data-source="n_raw" data-target="n_clean" d="M200 180 V270"/>
+    <path id="e_clean_feature" data-edge="true" data-source="n_clean" data-target="n_feature" d="M200 350 V440"/>
+    <path id="e_feature_model" data-edge="true" data-source="n_feature" data-target="n_model" d="M320 480 H385 V245 H450"/>
+    <path id="e_model_solve" data-edge="true" data-source="n_model" data-target="n_solve" d="M580 290 V420"/>
+    <path id="e_solve_check" data-edge="true" data-source="n_solve" data-target="n_check" d="M710 465 H850"/>
+    <path id="e_check_output" data-edge="true" data-source="n_check" data-target="n_output" d="M940 510 V590"/>
+    <path id="e_check_model" data-edge="true" data-source="n_check" data-target="n_model"
+          data-line-meaning="feedback" d="M940 420 V120 H580 V200" stroke="#6b7075" stroke-dasharray="9 7"/>
+  </g>
+
+  <g fill="#202124" font-size="26" text-anchor="middle">
+    <text data-label-for="n_raw" x="200" y="150">导入原始数据</text>
+    <text data-label-for="n_clean" x="200" y="320">清洗异常与缺失</text>
+    <text data-label-for="n_feature" x="200" y="490">构造模型特征</text>
+    <text data-label-for="n_model" x="580" y="255">建立数学模型</text>
+    <text data-label-for="n_solve" x="580" y="475">求解模型参数</text>
+    <text data-label-for="n_check" x="940" y="474">检验通过？</text>
+    <text data-label-for="n_output" x="970" y="640">形成结论与建议</text>
+  </g>
+  <g fill="#4f555a" font-size="24">
+    <text x="960" y="558">通过</text>
+    <text x="730" y="108">未通过：修正结构或参数</text>
+  </g>
+</svg>
