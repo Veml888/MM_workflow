@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0",
+  "paper_order": [
+    "references/chapters/00-摘要.md",
+    "references/chapters/01-问题重述.md",
+    "references/chapters/02-问题分析.md",
+    "references/chapters/03-模型假设.md",
+    "references/chapters/04-符号说明.md",
+    "references/chapters/05-模型的建立与求解.md",
+    "references/chapters/06-模型评价与推广.md",
+    "references/chapters/07-AI使用声明.md",
+    "references/chapters/08-参考文献.md",
+    "references/chapters/09-附录.md"
+  ],
+  "writing_order": [
+    "references/chapters/01-问题重述.md",
+    "references/chapters/02-问题分析.md",
+    "references/chapters/03-模型假设.md",
+    "references/chapters/04-符号说明.md",
+    "references/chapters/05-模型的建立与求解.md",
+    "references/chapters/06-模型评价与推广.md",
+    "references/chapters/07-AI使用声明.md",
+    "references/chapters/08-参考文献.md",
+    "references/chapters/09-附录.md",
+    "references/chapters/00-摘要.md"
+  ],
+  "abstract_must_be_written_last": true,
+  "required_before_writing": [
+    "SKILL.md",
+    "references/workflow-and-gates.md",
+    "references/common-paper-rules.md",
+    "references/篇幅控制-playbook.md",
+    "references/chapters/00-摘要.md",
+    "references/chapters/01-问题重述.md",
+    "references/chapters/02-问题分析.md",
+    "references/chapters/03-模型假设.md",
+    "references/chapters/04-符号说明.md",
+    "references/chapters/05-模型的建立与求解.md",
+    "references/chapters/06-模型评价与推广.md",
+    "references/chapters/07-AI使用声明.md",
+    "references/chapters/08-参考文献.md",
+    "references/chapters/09-附录.md",
+    "references/layout-and-compilation.md",
+    "references/language-and-storyline.md",
+    "references/second-pass-review.md",
+    "../mm-orchestrator/references/cumcm-shared-policy.md",
+    "../mm-orchestrator/references/project-manifest-contract.md"
+  ],
+  "reread_before_writing": {
+    "摘要": "references/chapters/00-摘要.md",
+    "问题重述": "references/chapters/01-问题重述.md",
+    "问题分析": "references/chapters/02-问题分析.md",
+    "模型假设": "references/chapters/03-模型假设.md",
+    "符号说明": "references/chapters/04-符号说明.md",
+    "模型的建立与求解": "references/chapters/05-模型的建立与求解.md",
+    "模型评价与推广": "references/chapters/06-模型评价与推广.md",
+    "AI使用声明": "references/chapters/07-AI使用声明.md",
+    "参考文献": "references/chapters/08-参考文献.md",
+    "附录": "references/chapters/09-附录.md"
+  },
+  "limits": {
+    "skill_max_bytes": 12000,
+    "module_max_bytes": 20000,
+    "chunk_max_bytes": 7000
+  }
+}
