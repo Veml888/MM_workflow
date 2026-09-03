@@ -59,7 +59,7 @@
   },
   "limits": {
     "skill_max_bytes": 12000,
-    "module_max_bytes": 23000,
+    "module_max_bytes": 26000,
     "chunk_max_bytes": 7000
   }
 }

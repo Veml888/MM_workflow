@@ -1,6 +1,6 @@
 ---
 name: mm-orchestrator
-description: 全国大学生数学建模竞赛（CUMCM）全流程编排入口。当用户要开始国赛建模、说"开始建模"、"做这道国赛题"、"跑完整流程"、"写数模论文"，或需要按阶段调度赛题分析、建模求解、编程实现、图表生成、流程与示意图绘制、论文撰写时使用。本 skill 负责询问关键偏好、生成 plan.md、todo.md、project-manifest.json 与论文结构规划/图需求，并调度下游阶段 skill。
+description: 全国大学生数学建模竞赛（CUMCM）全流程编排入口。当用户要开始国赛建模、说"开始建模"、"做这道国赛题"、"跑完整流程"、"写数模论文"，或需要按阶段调度赛题分析、建模求解、编程实现、图表生成、流程与示意图绘制、论文撰写时使用。本 skill 负责确认少量关键偏好（侧重点、子问题数；编程语言固定为 Python 不问）、生成 plan.md、todo.md、project-manifest.json 与论文结构规划/图需求，并调度下游阶段 skill。
 ---
 
 <!-- READ-PREAMBLE:v1 -->
@@ -30,11 +30,10 @@ description: 全国大学生数学建模竞赛（CUMCM）全流程编排入口�
 
 用提问工具（`AskUserQuestion`，名称以当前环境可用工具为准）只问会实质影响后续阶段的问题（不要超过 4 个，能推断的不要问）：
 
-1. **编程语言**：Python（默认）/ MATLAB / 混合。
-2. **侧重点**：精度优先（默认）/ 可解释性优先 / 速度优先 / 均衡。
-3. **子问题数量**：已知 N 个 / 待赛题分析确定。
+1. **侧重点**：精度优先（默认）/ 可解释性优先 / 速度优先 / 均衡。
+2. **子问题数量**：已知 N 个 / 待赛题分析确定。
 
-把答案连同题目信息一起写入 `plan.md`。
+**编程语言固定为 Python（默认，不询问）**：本工作流所有校验/审计脚本均为 Python，图件与结果用 Python 实现最一致；除非用户显式要求 MATLAB，否则一律按 Python 执行，并把"python"写入 `plan.md` 与各阶段交割。把答案连同题目信息一起写入 `plan.md`。
 
 ### 第 3 步：生成 plan.md、todo.md、project-manifest.json 与论文策划文件
 
@@ -59,17 +58,17 @@ description: 全国大学生数学建模竞赛（CUMCM）全流程编排入口�
 | 6b | 论文终稿第二轮（重新完整读全部模块后独立终审） | `mm-paper-writing` | 修订后的 `paper/论文.tex`、`paper/论文.pdf`、`paper/skill-read-receipt-pass-2.json`、`paper/pass-2-audit.md` |
 | 7 | 验收 | `mm-verification` | `docs/06-verification-report.md` |
 
-### 流程策划：初稿接管、结构规划与图件骨架
+### 论文策划（编排器本步直接产出，不调用其它 skill）
 
-分析、建模和编程完成后，基于 `docs/01~03`、`results/` 与 `plan.md` 正式定稿论文策划；初始化阶段的空骨架不能直接通过本阶段。
+本步由编排器**直接产出**以下策划文件（不调用其它 skill 来做策划；初稿接管仅在用户预先提供草稿时才执行）。分析、建模和编程完成后，基于 `docs/01~03`、`results/` 与 `plan.md` 正式定稿论文策划；初始化阶段的空骨架不能直接通过本阶段。**与下一步"第 4 步：按序调用阶段 skill"的区别**：本步产出的是论文的"结构与预算决策"，下一步才开始真正调用 mm-problem-analysis / mm-modeling / mm-coding / mm-figures / mm-graphics / mm-paper-writing / mm-verification 这些阶段 skill。
 
 **初稿接管（如存在）**：若此时 `paper/论文.tex` 已存在且尚未由 `paper_final` 产出，将其精确改名为 `paper/draft-baseline.tex`，保留原文件并记录 SHA256，不得直接覆盖；能够编译时生成 `paper/draft-baseline.pdf`，用 `<mm-paper-writing目录>/scripts/check_paper_length.py --draft` 记录基线页数。编排器只做只读比较和缺口规划，不改写初稿正文。若已有 `draft-baseline.*`，不得覆盖；若无初稿，记录 `draft.mode=none`。
 
 - `paper/draft-audit.md`：逐章将初稿内容标记为“保留 / 改写 / 删除 / 补充”，核对题意、最终模型、公式符号、真实结果、图件锚点、题面覆盖、占位符与模板化段落；冲突一律以上游报告、结果和 manifest 为准。
 - `paper/draft-metrics.json`：记录初稿模式、路径、SHA256、总页数/正文页数、各章起始页和可编译状态；没有初稿时仍生成并写明 `mode=none`。
 
-- `paper/structure-plan.md`（内容，由编排器建）：章节骨架 + 逐问论证链 + 预计篇幅。章节按固定论文结构；每问写清核心论证链（承接 → 建模 → 求解 → 结果表 → 结果分析）与预计篇幅，并建立"题面要求/子问题 → 正文小节 → 模型变量与约束 → 结果证据 → 最终回答"的追踪关系（供 `mm-verification` 逐项验收）。
-- `paper/page-budget.json`（机器可读预算）：`target_body_pages` 只能为 28 或 29，`allowed_range` 固定 `[27,30]`；每章记录 `min_pages/target_pages/max_pages`、真实 `source_paths` 与 `evidence_ids`，各章目标页数之和必须等于总目标。预算按问题难度和证据量分配，不平均分配、不以空泛内容补页。
+- `paper/structure-plan.md`（内容，由编排器建）：章节骨架 + 逐问论证链 + 预计篇幅。**章节骨架以 `mm-paper-writing/references/common-paper-rules.md` 的"整体论文骨架"与 `references/writing-order.json` 的章节清单为唯一权威**（每问独立成章、模型评价与推广单独一章这类结构编排不在此重复）；每问写清核心论证链（承接 → 建模 → 求解 → 结果表 → 结果分析）与预计篇幅，并建立"题面要求/子问题 → 正文小节 → 模型变量与约束 → 结果证据 → 最终回答"的追踪关系（供 `mm-verification` 逐项验收）。
+- `paper/page-budget.json`（机器可读预算）：`target_body_pages` 只能为 28 或 29，`allowed_range` 固定 `[27,30]`；每章记录 `min_pages/target_pages/max_pages`、真实 `source_paths` 与 `evidence_ids`，各章目标页数之和必须等于总目标。预算按问题难度和证据量分配，不平均分配、不以空泛内容补页。**注：目标页数取 28/29 是为给分页波动留余量；实际正文允许到 30 页，`check_paper_length` 以 `allowed_range` 兜底，不因低于 30 而判过预算缺陷**。
 
 正式预算使用以下内联结构（初始化时可为空，定稿时不得保留占位符）：
 
@@ -110,32 +109,19 @@ description: 全国大学生数学建模竞赛（CUMCM）全流程编排入口�
 - 技术路线、总体框架、模型结构、指标体系、变量关系、验证闭环、复杂自研算法流程图 → `mm-graphics`（常规求解步骤用正文，不画流程图）；
 - 题目场景、空间关系等需按真实几何/坐标呈现的示意图 → `mm-graphics` 精确路线（TikZ/SVG，按题面事实绘制；无适用场景不画）
 
-论文固定结构（策划与终稿共用，详见 `mm-paper-writing/references/common-paper-rules.md` 与 `references/writing-order.json`）：
-
-```text
-一、问题重述（1.1 背景 / 1.2 提出）
-二、问题分析（逐问一小节，不另设“各问之间的联系”汇总小节）
-三、模型假设（2–8 条，编号列表）
-四、符号说明（表格：符号 | 含义）
-五、模型的建立与求解（外层按问题顺序，允许条件性的公共数据处理；内层标题按内容生成）
-六、模型评价与推广（优点 + 真实缺点 + 改进/推广；模型对比、检验、灵敏度与鲁棒性按需嵌入对应位置）
-AI 工具使用声明 / 参考文献 / 附录（不加顺序序号）
-```
-
 ### 第 4 步：按序调用阶段 skill
 
 - 先完成分析、建模和编程，再正式完成初稿审计、结构计划、页面预算与图件骨架；`validate_paper_plan.py` 必须 exit 0 且 `paper_plan.status=complete`。随后 `mm-figures` 与 `mm-graphics` 两个分支按适用性并行调用，全部完成或标记 `n_a` 后再进入论文终稿。
 - 论文终稿阶段固定连续调用 `mm-paper-writing` 两次。每次调用都先运行该 skill 的 `scripts/read_complete.py plan`，再按计划逐块读取 `references/writing-order.json` 登记的全部必读文件；每块必须出现 `READ-END`，并以本轮独立读取回执通过 `read_complete.py verify` 为准。第二次不得复用第一次回执、上下文或“已读”结论。
 - 第一次调用结束后生成 `paper/skill-read-receipt-pass-1.json` 与 `paper/pass-1-audit.md`，把 `paper_final.full_skill_passes` 记为 `1`，但 `paper_final.status` 保持 `in_progress`。随后立即进行第二次独立调用，以第一次终稿为审查和修订对象，重新运行双遍编译及全部专项机检，生成第二轮回执与审计。
 - 两轮审计都必须覆盖注册表中的每个必读文件及其全部二/三级标题，并通过 `validate_requirement_coverage.py`。只有第二次无阻断项、`paper_final.full_skill_passes=2`、两轮回执和审计路径均已登记哈希时，才能把 `paper_final.status` 置为 `complete` 并进入 `mm-verification`；否则继续留在论文终稿阶段。
-- `mm-graphics` 负责技术路线、总体框架、模型结构、指标体系、变量关系、验证闭环（逻辑图，TikZ），以及需按真实几何/坐标呈现的场景与空间关系示意（TikZ/SVG 精确路线，按题面事实绘制；不使用 AI 图像生成）；只有复杂自研算法才允许算法流程图。
 - 每个阶段开始前，回显：当前阶段、负责 skill、将读取的上游报告、将产出的文件。
 - 每个阶段开始前输出 GATE 确认：上游产物存在、必读规范已读（引用原文）、计划产出明确；缺上游先补齐再进下一阶段。
 - 每阶段结束后更新 `project-manifest.json` 中自己负责的阶段状态、产物哈希和版本。发生回写时追加 `change_log`，记录原因和受影响 ID。
 - 若某一阶段被跳过或不适用，在 `plan.md` 中注明原因，并将 manifest 对应阶段标记为 `n_a`；范围化验收不要求 `n_a` 阶段产物，但最终总结必须说明范围。
 - 阶段产物未通过 `mm-verification` 前，不得声称"全流程完成"。
 - `mm-verification` 只审计、定位并指定回写阶段；本 skill 负责调用对应 skill 修复后再次验收。
-- 每个阶段完成前运行 `<mm-orchestrator目录>/scripts/validate_manifest.py` 及该阶段的**机检脚本**：paper_plan 用 `validate_paper_plan.py`，coding 用 `check_reproducibility.py`，paper_final 的两次独立调用都用 `check_paper_length.py`、`check_paper_refs.py`、`check_layout.py` 及论文专项脚本，figures 用 `check_figure_overlap.py`。**PASS 一律以脚本 exit 0 为准，禁止手写 PASS**。任一脚本 FAIL 不得继续下游，先返回该阶段修正；验收发现的问题写入 `rework[]`，按影响范围重新调用目标阶段及下游阶段。
+- 每个阶段完成前运行 `<mm-orchestrator目录>/scripts/validate_manifest.py` 及该阶段的**机检脚本**：analysis 用 `check_analysis_report.py`（在 `<mm-problem-analysis目录>/scripts/`），**modeling 用 `模型字典复核`（见 `mm-modeling` SKILL Step 3.6，每个子问题的推荐模型须调用 `<mm-model-dictionary目录>/scripts/query_model_dictionary.py` 核查，结果为 `合适/有条件合适/不合适/证据不足待复核` 之一；`不合适` 须回退重选）**，paper_plan 用 `validate_paper_plan.py`，coding 用 `check_reproducibility.py`，figures 用 `check_figure_overlap.py`，graphics 用 `render_tikz.py`/`audit_svg.py`/`render_svg.py`；**paper_final 的两次独立调用都跑全套论文机检**：`check_paper_length`、`check_line_spacing`、`check_noindent`、`check_quotes`、`check_abstract_symbols`、`audit_paper_tables`、`audit_submission_language`、`audit_abstract_page`、`check_paper_cites`、`check_paper_refs`、`check_layout`（共 11 项，全部要 exit 0）。**PASS 一律以脚本 exit 0 为准，禁止手写 PASS**。任一脚本 FAIL 不得继续下游，先返回该阶段修正；验收发现的问题写入 `rework[]`，按影响范围重新调用目标阶段及下游阶段。
 
 ## 边界
 

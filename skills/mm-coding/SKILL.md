@@ -1,6 +1,6 @@
 ---
 name: mm-coding
-description: CUMCM 编程实现阶段。当用户需要把建模报告落成 Python/MATLAB 代码、运行求解、计算结果、执行适用的证据实验或仿真，并生成扩展复现清单时使用。产出 code/、results/、docs/03-results-report.md 与 manifest 记录。
+description: CUMCM 编程实现阶段。当用户需要把建模报告落成可运行的 Python 代码、运行求解、计算结果、执行适用的证据实验或仿真，并生成扩展复现清单时使用。产出 code/、results/、docs/03-results-report.md 与 manifest 记录。
 ---
 
 <!-- READ-PREAMBLE:v1 -->
@@ -51,7 +51,7 @@ description: CUMCM 编程实现阶段。当用户需要把建模报告落成 Pyt
 
 ### Step 5：生成复现清单
 
-按 §七"复现清单结构"写 `results/复现清单.json`，记录执行命令、工作目录、随机种子、输入与代码 SHA-256、依赖锁文件、操作系统、求解器版本、收敛状态、数值容差、运行耗时和输入输出清单。**写入后必须运行 `python <mm-orchestrator目录>/scripts/check_reproducibility.py results/复现清单.json --root .`；PASS 以脚本返回值为准（exit 0，且它重算的 SHA-256 与真实文件一致），禁止只写"已复现"而不跑脚本**。脚本 FAIL 时修正清单或真实哈希，直到 exit 0。
+按 §七"复现清单结构"写 `results/复现清单.json`，记录执行命令、工作目录、随机种子、输入与代码 SHA-256、依赖锁文件、操作系统、求解器版本、收敛状态、数值容差、运行耗时和输入输出清单。**写入后必须运行 `python <mm-coding目录>/scripts/check_reproducibility.py results/复现清单.json --root .`；PASS 以脚本返回值为准（exit 0，且它重算的 SHA-256 与真实文件一致），禁止只写"已复现"而不跑脚本**。脚本 FAIL 时修正清单或真实哈希，直到 exit 0。
 
 ### Step 6：写结果报告
 
@@ -228,7 +228,7 @@ if __name__ == "__main__":
 }
 ```
 
-依赖必须有可安装的锁定清单；Python 项目可使用带精确版本的 `requirements-lock.txt`，MATLAB 项目记录版本与所需 toolbox。执行命令应从项目根目录直接运行，不依赖未记录的交互操作。输入与代码文件哈希可用 `hashlib.sha256(open(p,"rb").read()).hexdigest()` 计算。若某些文件哈希或耗时缺失，宁可写 `null` 也不要伪造；验收阶段会据此标记"可复现性不完整"。
+依赖必须有可安装的锁定清单，Python 项目使用带精确版本的 `requirements-lock.txt`；执行命令从项目根目录直接运行，不依赖未记录的交互操作。输入与代码文件哈希可用 `hashlib.sha256(open(p,"rb").read()).hexdigest()` 计算。若某些文件哈希或耗时缺失，宁可写 `null` 也不要伪造；验收阶段会据此标记"可复现性不完整"。
 
 ## 八、边界
 
