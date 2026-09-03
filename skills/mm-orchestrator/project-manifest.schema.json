@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/cumcm/project-manifest-2.0.schema.json",
+  "title": "CUMCM 2026 project manifest",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version", "competition", "project", "stages", "requirements",
+    "problems", "datasets", "assumptions", "model_candidates", "selected_models",
+    "implemented_models", "validation_plans", "symbols", "results", "figures",
+    "artifacts", "paper_gates", "rework", "change_log"
+  ],
+  "properties": {
+    "schema_version": {"const": "2.0"},
+    "competition": {"const": "CUMCM-2026"},
+    "project": {
+      "type": "object",
+      "required": ["title", "language"],
+      "properties": {"title": {"type": "string"}, "language": {"type": "string"}},
+      "additionalProperties": true
+    },
+    "stages": {
+      "type": "object",
+      "required": ["analysis", "modeling", "coding", "figures", "diagrams", "visual", "paper_draft", "paper_final", "verification"],
+      "properties": {
+        "analysis": {"$ref": "#/$defs/ordinaryStage"},
+        "modeling": {"$ref": "#/$defs/ordinaryStage"},
+        "coding": {"$ref": "#/$defs/ordinaryStage"},
+        "figures": {"$ref": "#/$defs/ordinaryStage"},
+        "diagrams": {"$ref": "#/$defs/ordinaryStage"},
+        "visual": {"$ref": "#/$defs/ordinaryStage"},
+        "paper_draft": {"$ref": "#/$defs/ordinaryStage"},
+        "paper_final": {"$ref": "#/$defs/ordinaryStage"},
+        "verification": {"$ref": "#/$defs/verificationStage"}
+      },
+      "additionalProperties": true
+    },
+    "requirements": {"$ref": "#/$defs/idArray"},
+    "problems": {"$ref": "#/$defs/idArray"},
+    "datasets": {"$ref": "#/$defs/idArray"},
+    "assumptions": {"$ref": "#/$defs/idArray"},
+    "model_candidates": {"$ref": "#/$defs/idArray"},
+    "selected_models": {"$ref": "#/$defs/idArray"},
+    "implemented_models": {"$ref": "#/$defs/idArray"},
+    "validation_plans": {"$ref": "#/$defs/idArray"},
+    "symbols": {"$ref": "#/$defs/idArray"},
+    "results": {"$ref": "#/$defs/idArray"},
+    "figures": {"$ref": "#/$defs/idArray"},
+    "artifacts": {"type": "array", "items": {"type": "object", "required": ["path", "producer_stage", "version"]}},
+    "paper_gates": {"type": "array", "items": {"type": "object", "required": ["id", "gate", "status", "evidence_path"], "properties": {"id": {"type": "string"}, "gate": {"enum": ["G-1", "G-2", "G-3", "G-4", "G-5"]}, "status": {"enum": ["pending", "pass", "fail"]}, "evidence_path": {"type": "string"}}, "additionalProperties": true}},
+    "rework": {"type": "array", "items": {"type": "object", "required": ["id", "source", "target_stage", "affected_stages", "issue", "severity", "status"], "properties": {"id": {"type": "string"}, "source": {"type": "string"}, "target_stage": {"type": "string"}, "affected_stages": {"type": "array", "items": {"type": "string"}}, "issue": {"type": "string"}, "severity": {"enum": ["critical", "major", "minor"]}, "status": {"enum": ["open", "resolved", "superseded"]}}, "additionalProperties": true}},
+    "change_log": {"type": "array", "items": {"type": "object"}}
+  },
+  "$defs": {
+    "ordinaryStage": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {"status": {"enum": ["pending", "in_progress", "complete", "failed", "n_a"]}},
+      "additionalProperties": true
+    },
+    "verificationStage": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {"status": {"enum": ["pending", "in_progress", "complete", "failed", "conditional", "n_a"]}},
+      "additionalProperties": true
+    },
+    "idArray": {
+      "type": "array",
+      "items": {"type": "object", "required": ["id"], "properties": {"id": {"type": "string", "minLength": 1}}, "additionalProperties": true}
+    }
+  }
+}

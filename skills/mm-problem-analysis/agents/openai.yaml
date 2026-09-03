@@ -1,0 +1,4 @@
+interface:
+  display_name: "CUMCM 赛题分析"
+  short_description: "拆解国赛题、审计数据并建立可追溯的建模交接契约"
+  default_prompt: "Use $mm-problem-analysis to analyze this CUMCM problem and produce a traceable handoff for modeling."

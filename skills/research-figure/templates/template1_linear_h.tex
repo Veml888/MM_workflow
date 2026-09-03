@@ -1,0 +1,60 @@
+\documentclass[border=5pt]{standalone}
+\usepackage{tikz}
+\usepackage{amsmath}
+\usetikzlibrary{positioning, arrows.meta, calc, fit, backgrounds, decorations.pathreplacing}
+
+% --- Color Scheme (Blue-Gray) ---
+\definecolor{bgPrimary}{HTML}{DAE8FC}
+\definecolor{bgSecondary}{HTML}{E8EEF7}
+\definecolor{bgAccent}{HTML}{B3CDE3}
+\definecolor{bgInput}{HTML}{F0F4F8}
+\definecolor{borderPrimary}{HTML}{6C8EBF}
+\definecolor{borderAccent}{HTML}{3A6EA5}
+\definecolor{arrowColor}{HTML}{4A6A8A}
+\definecolor{textMain}{HTML}{2C3E50}
+\definecolor{textLight}{HTML}{7F8C8D}
+\definecolor{bgHighlight}{HTML}{FFF3CD}
+
+% --- Styles ---
+\tikzset{
+  module/.style={
+    draw=borderPrimary, fill=bgPrimary, rounded corners=4pt,
+    minimum width=2.8cm, minimum height=1.2cm,
+    font=\sffamily\small, text=textMain, line width=0.6pt, align=center,
+  },
+  novelmodule/.style={
+    draw=borderAccent, fill=bgAccent, rounded corners=4pt,
+    minimum width=2.8cm, minimum height=1.2cm,
+    font=\sffamily\small\bfseries, text=textMain, line width=1.0pt, align=center,
+  },
+  iobox/.style={
+    draw=borderPrimary, fill=bgInput, rounded corners=3pt,
+    minimum width=2cm, minimum height=1cm,
+    font=\sffamily\small, text=textMain, line width=0.5pt, align=center,
+  },
+  stdarrow/.style={
+    -{Stealth[length=5pt, width=4pt]}, line width=0.6pt, color=arrowColor,
+  },
+}
+
+\begin{document}
+\begin{tikzpicture}
+
+  % --- Nodes ---
+  \node[iobox]      (input)  {Input};
+  \node[module,      right=1.0cm of input]  (mod1) {Module 1};
+  \node[novelmodule, right=1.0cm of mod1]   (mod2) {\textbf{Module 2}\\[-1pt]{\footnotesize\color{textLight}(Ours)}};
+  \node[module,      right=1.0cm of mod2]   (mod3) {Module 3};
+  \node[iobox,       right=1.0cm of mod3]   (output) {Output};
+
+  % --- Arrows ---
+  \draw[stdarrow] (input) -- (mod1);
+  \draw[stdarrow] (mod1)  -- (mod2);
+  \draw[stdarrow] (mod2)  -- (mod3);
+  \draw[stdarrow] (mod3)  -- (output);
+
+  % --- Arrow labels (optional) ---
+  \node[above, font=\sffamily\scriptsize, text=textLight] at ($(mod1)!0.5!(mod2)$) {features};
+
+\end{tikzpicture}
+\end{document}
