@@ -64,7 +64,7 @@
 - `modeling` 创建和维护 `selected_models`、正式 `assumptions` 状态、`symbols` 和 `validation_plans.plan`，并登记 `docs/02-modeling-report.md`。正式公式、参数、假设和求解算法由本阶段定型。
 - `coding` 创建和维护 `implemented_models`、`results` 和 `validation_plans.execution`，并登记 `docs/03-results-report.md`。
 - `paper_plan`（论文策划，由 `mm-orchestrator` 产出）初始化空骨架时保持 `pending`；分析、建模和编程完成后冻结/登记可选初稿，创建 `paper/draft-audit.md`、`paper/draft-metrics.json`、正式 `structure-plan.md`、`page-budget.json`、`figure-requirements.md` 与 `writing-gates.md`。只有 `validate_paper_plan.py` exit 0、预算目标28～29页且产物哈希已登记时才能 `complete`。
-- `figures` 只创建数据图、`graphics` 创建非数据图（逻辑/框架/机理图 + 视觉示意图，含 `docs/05-visual-report.md`），二者只创建自己负责的图件、报告和 `figures[]` 记录，不修改论文源文件；缺少适用性时标记对应阶段为 `n_a`。
+- `figures` 只创建数据图、`graphics` 创建非数据图（逻辑/框架/机理图 + 场景/空间精确示意图，登记于 `docs/05-diagrams-report.md`），二者只创建自己负责的图件、报告和 `figures[]` 记录，不修改论文源文件；缺少适用性时标记对应阶段为 `n_a`。
 - `paper_final` 独占 `paper/论文.tex`、`paper/论文.pdf` 的写入权；初稿基线只读且不得覆盖。完整流程必须独立调用 `mm-paper-writing` 两次，每次都按其 `writing-order.json` 和 `read_complete.py` 重新完整读取全部必读模块，验证本轮独立读取回执，将 G-1~G-5 全部复核为 `pass`，生成对应轮次审计，并在该次调用内多轮编译直至正文27～30页和全部专项机检通过。第一轮结束保持 `in_progress`；第二轮通过后才可 `complete`。
 - `verification` 只审计、创建 `rework[]` 和验收报告，不直接修改上游产物；`conditional` 只允许非关键问题。
 - 下游阶段可以引用这些 ID、补充自己负责的字段；发现上游事实错误时必须通过 `change_log` 发起回写，不得静默改写。

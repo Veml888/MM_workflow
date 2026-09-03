@@ -111,7 +111,7 @@ def check(root: Path, tex_path: Path) -> tuple[list[str], list[str]]:
 
     # orphan figures: declared in reports but not in tex
     declared: set[str] = set()
-    for rel in ("docs/04-figures-report.md", "docs/05-diagrams-report.md", "docs/05-visual-report.md"):
+    for rel in ("docs/04-figures-report.md", "docs/05-diagrams-report.md"):
         declared |= report_figures(root / rel)
     for name in sorted(declared):
         if name not in resolved:

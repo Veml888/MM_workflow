@@ -12,10 +12,15 @@
       table/floating 浮动环境；longtable 必须具备 \\endfirsthead/\\endhead 续表头。
   T-4 表格字体：表内须为五号宋体（\\songti\\zihao{5}），禁止相对字号或其它中文字体替代。
   T-5 三线表：使用 booktabs 的 \\toprule/\\midrule/\\bottomrule。
+  T-5b longtable 跨页续表完整性：必须具备 \\endfirsthead/\\endhead/\\endfoot/\\endlastfoot
+      四件套；续页标题必带原表号（\\thetable）；末页底线 \\bottomrule 只允许一条且须在
+      \\endlastfoot 内（表末数据行后不得再写第二个 \\bottomrule）。
   T-6 结构：\\end{document} 恰出现一次（防重复）。
 
 用法：python audit_paper_tables.py <论文.tex>
 """
+
+from __future__ import annotations
 
 import re
 import sys
@@ -90,15 +95,34 @@ def check(tex, path):
     if not (has_labelsep and has_fnum_table and has_fnum_figure):
         ok = False
 
-    # ---- T-2 表格列对齐：禁止 l / r 列 ----
-    for m in re.finditer(r'\\begin\{(tabular\*?|longtable)\}\{([^}]*)\}', tex):
-        spec = m.group(2)
-        # 去除 C{...}（居中定宽列）与 p{...}/X 等后，看剩余单字符列类型的字母
-        strip = re.sub(r'[CpX][^{}]*\{[^}]*\}', '', spec)
-        bare = [c for c in strip if c.isalpha()]
-        for c in bare:
+    # ---- T-2 表格列对齐：禁止 l / r 列与 raggedright/raggedleft 前缀 ----
+    def extract_col_spec(tex: str, brace_pos: int) -> str:
+        """从 '{' 起做花括号平衡解析，取完整列定义（@{}、>{...} 前缀一并捕获）。"""
+        depth, i, n = 0, brace_pos, len(tex)
+        while i < n:
+            if tex[i] == '{':
+                depth += 1
+            elif tex[i] == '}':
+                depth -= 1
+                if depth == 0:
+                    return tex[brace_pos + 1:i]
+            i += 1
+        return tex[brace_pos + 1:brace_pos + 200]
+
+    for m in re.finditer(r'\\begin\{(tabular\*?|longtable)\}\s*\{', tex):
+        spec = extract_col_spec(tex, m.end() - 1)
+        line = tex[:m.start()].count('\n') + 1
+        # 1) 前缀级左/右对齐（藏在 >{...}、@{...}、*{n}{...} 里，旧正则看不到）
+        if re.search(r'raggedright|raggedleft', spec):
+            errs.append(f'T-2 表格列含 \\raggedright/\\raggedleft（左/右对齐）列前缀（line ~{line}），长文本应用 >{{\\centering\\arraybackslash}}p{{}} 居中换行')
+            ok = False
+        # 2) 裸 l / r 列：跳过 {...} 花括号组与 >/@ 前缀后检查顶层列字母
+        stripped = re.sub(r'[@!>]\s*\{[^{}]*\}', '', spec)   # 去 @{} >{} 前缀
+        stripped = re.sub(r'\*\s*\{\d+\}\s*\{([^{}]*)\}', r'\1', stripped)  # 展开 *{n}{cols}
+        stripped = re.sub(r'[CpXmbBw]\s*(\[[^\]]*\])?\s*\{[^{}]*\}', '', stripped)  # 去带参列类型
+        for c in stripped:
             if c in 'lr':
-                errs.append(f'T-2 表格列含左/右对齐 `{c}`（line ~{tex[:m.start()].count(chr(10))+1}），应为居中 c / C{{}}')
+                errs.append(f'T-2 表格列含左/右对齐 `{c}`（line ~{line}），应为居中 c / C{{}}')
                 ok = False
 
     # ---- T-3 符号说明：单个 longtable、三列、非浮动、含续表头 ----
@@ -177,49 +201,91 @@ def check(tex, path):
         errs.append('T-5 表格未使用 \\toprule（三线表）')
         ok = False
 
+    # ---- T-5b longtable 跨页续表完整性：四件套 + 续页标题带表号 + 仅末页一条底线 ----
+    # 硬性：endfirsthead / endhead / endfoot / endlastfoot 缺一即 FAIL；
+    #       续页标题必带原表号（\\thetable）；\\bottomrule 只允许出现在 endlastfoot 内。
+    for m in re.finditer(r'\\begin\{longtable\}\{([^}]*)\}(.*?)\\end\{longtable\}', tex, re.S):
+        spec, body = m.group(1), m.group(2)
+        line = tex[:m.start()].count('\n') + 1
+        for cmd in (r'\endfirsthead', r'\endhead', r'\endfoot', r'\endlastfoot'):
+            if cmd not in body:
+                errs.append(f'T-5b longtable（第 {line} 行）缺少 {cmd}（跨页续表必须配齐 endfirsthead/endhead/endfoot/endlastfoot 四件套）')
+                ok = False
+        if r'\endfirsthead' in body and r'\endhead' in body:
+            head = body[body.index(r'\endfirsthead'):body.index(r'\endhead')]
+            if '续表' not in head:
+                errs.append(f'T-5b longtable（第 {line} 行）续页无 "续表 N　原表题" 标题')
+                ok = False
+            elif r'\thetable' not in head:
+                errs.append(f'T-5b longtable（第 {line} 行）续页标题未带原表号：应 \\multicolumn{{N}}{{c}}{{续表\\quad \\thetable\\quad 原表题}}')
+                ok = False
+        # 三线表末页底线只允许一条，且须位于 \endfoot 与 \endlastfoot 之间的末页页脚段内：
+        #   ...\endhead ... 续下页...\endfoot \bottomrule \endlastfoot
+        # 不得在表末数据行后单独写第二个 \bottomrule。
+        br_count = len(re.findall(r'\\bottomrule', body))
+        if br_count > 1:
+            errs.append(f'T-5b longtable（第 {line} 行）出现 {br_count} 个 \\bottomrule；三线表末页底线只能有一条，须放在 \\endfoot 与 \\endlastfoot 之间的末页页脚段内')
+            ok = False
+        elif br_count == 1:
+            br_pos = body.find(r'\bottomrule')
+            endfoot_pos = body.find(r'\endfoot')
+            endlast_pos = body.find(r'\endlastfoot')
+            # \bottomrule 必须在 endfoot（若存在）与 endlastfoot 之间
+            if endlast_pos == -1:
+                errs.append(f'T-5b longtable（第 {line} 行）未配置 \\endlastfoot，末页底线 \\bottomrule 无处安放')
+                ok = False
+            elif endfoot_pos != -1 and not (endfoot_pos < br_pos < endlast_pos):
+                errs.append(f'T-5b longtable（第 {line} 行）\\bottomrule 不在 \\endfoot 与 \\endlastfoot 之间的末页页脚段内')
+                ok = False
+            elif endfoot_pos == -1 and not (br_pos < endlast_pos):
+                errs.append(f'T-5b longtable（第 {line} 行）\\bottomrule 位置异常（应紧邻 \\endlastfoot 之前）')
+                ok = False
+
     # ---- T-6 end{document} 恰一次 ----
     cnt = tex.count(r'\end{document}')
     if cnt != 1:
         errs.append(f'T-6 \\end{{document}} 出现 {cnt} 次，应为 1 次（防重复/结构错误）')
         ok = False
 
-    # ---- T-8 模型章外层结构：允许条件性的公共数据处理，问题小节按题面顺序；
-    #      内层标题按模型内容生成，不强制统一模板或检验位置 ----
-    ms = re.search(r'\\section\{模型的建立与求解\}(.*?)(?=\\section\{)', tex, re.S)
-    if not ms:
-        errs.append('T-8 未找到 \\section{模型的建立与求解}')
+    # ---- T-8 模型章外层结构（参数化骨架）：每问独立成章，标题形如
+    #      "（核心模型名）的构建与求解——问题X"（"问题X"可在标题任意位置，
+    #      "构建与求解"/"建立与求解"均可），中文序号按题面从"一"起连续；
+    #      每问章内含 \subsection{模型建立} 与 \subsection{模型求解} 且建立在前 ----
+    numerals = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二']
+    sec_re = re.compile(r'\\section\{([^}]*)\}')
+    sec_positions = [(m.start(), m.group(1)) for m in sec_re.finditer(tex)]
+    prob_secs = []
+    for pos, title in sec_positions:
+        mn = re.search(r'问题([一二三四五六七八九十]{1,2})', title)
+        has_name = ('构建与求解' in title) or ('建立与求解' in title)
+        if mn and has_name and mn.group(1) in numerals:
+            prob_secs.append((numerals.index(mn.group(1)) + 1, pos, title))
+    if not prob_secs:
+        errs.append('T-8 未找到任何"（核心模型名）的构建与求解——问题X"一级章节；每问应独立成章（见 chapters/05 骨架）')
         ok = False
     else:
-        block = ms.group(1)
-        subs = re.findall(r'\\subsection\{([^}]*)\}', block)
-        if not subs:
-            errs.append('T-8 模型章未找到二级标题；应按题面顺序设置问题小节')
+        numbers = [n for n, _, _ in prob_secs]
+        if numbers != list(range(1, len(numbers) + 1)):
+            errs.append('T-8 问题章未按题面从"一"起连续编号（实际：%s）' % ' / '.join(t for _, _, t in prob_secs))
             ok = False
-        else:
-            numerals = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十']
-            found = []
-            for idx, title in enumerate(subs):
-                for number, numeral in enumerate(numerals, start=1):
-                    if ('问题' + numeral) in title:
-                        found.append((number, idx, title))
-                        break
-            if not found:
-                errs.append('T-8 模型章未找到“问题一：任务内容”等问题二级标题')
+        for i, (num, pos, title) in enumerate(prob_secs):
+            next_pos = None
+            for p2, _t2 in sec_positions:
+                if p2 > pos:
+                    next_pos = p2
+                    break
+            block = tex[pos:next_pos] if next_pos else tex[pos:]
+            has_build = re.search(r'\\subsection\{模型建立\}', block)
+            has_solve = re.search(r'\\subsection\{模型求解\}', block)
+            if not (has_build and has_solve):
+                errs.append('T-8 问题%s章（%s）缺少 \\subsection{模型建立}/\\subsection{模型求解} 二分层' % (numerals[num - 1], title))
                 ok = False
-            else:
-                numbers = [item[0] for item in found]
-                expected = list(range(1, len(numbers) + 1))
-                if numbers != expected:
-                    errs.append('T-8 问题二级标题未按题面连续顺序出现（实际：%s）' % ' / '.join(item[2] for item in found))
-                    ok = False
-                first_problem_idx = found[0][1]
-                prefix = subs[:first_problem_idx]
-                if len(prefix) > 1 or any(not re.search(r'数据|预处理|字段|样本', title) for title in prefix):
-                    errs.append('T-8 问题一之前只允许一个公共数据处理二级标题（实际：%s）' % (' / '.join(prefix) if prefix else '无'))
-                    ok = False
-        if re.search(r'\\paragraph\{', block):
-            errs.append('T-8 模型章标题层级超过三级；请将 paragraph 内容并入三级标题或正文')
-            ok = False
+            elif has_build.start() > has_solve.start():
+                errs.append('T-8 问题%s章内"模型建立"应位于"模型求解"之前' % numerals[num - 1])
+                ok = False
+            if re.search(r'\\paragraph\{', block):
+                errs.append('T-8 模型章标题层级超过三级；请将 paragraph 内容并入三级标题或正文')
+                ok = False
 
     # ---- T-9 公式分区/分组左花括号：同一 equation 出现 ≥2 个等号（链式 a=b=c、逗号/\\qquad 并列），
     #      或仅用 \\quad/\\qquad 并列多个约束/表达式（组）而未加 \\left\\{...\\right. 的，一律 FAIL ----
@@ -227,7 +293,9 @@ def check(tex, path):
         body = m.group(1)
         if (r'\left\{' in body) or ('aligned' in body) or ('cases' in body):
             continue
-        n_eq = body.count('=')
+        # 下标（如 \prod_{j=1}、\sum_{i=0}）中的 '=' 不是等式，计数前剔除
+        body_no_sub = re.sub(r'(_\{[^{}]*\})', lambda mm: mm.group(0).replace('=', ''), body)
+        n_eq = body_no_sub.count('=')
         n_sep = len(re.findall(r'\\quad+|\\qquad', body))
         if n_eq < 2 and n_sep < 2:
             continue

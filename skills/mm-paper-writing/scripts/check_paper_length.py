@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import sys
 
 # --- UTF-8 输出保护（防乱码）---
 if hasattr(sys, "stdout") and hasattr(sys.stdout, "reconfigure"):
@@ -28,6 +29,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("pdf", nargs="?", default="paper/论文.pdf", type=Path)
     parser.add_argument("--min-pages", type=int, default=27)
     parser.add_argument("--max-pages", type=int, default=30)
+    parser.add_argument("--appendix-min-pages", type=int, default=9)
+    parser.add_argument("--appendix-max-pages", type=int, default=11)
     parser.add_argument("--draft", action="store_true", help="allow missing abstract/appendix boundaries")
     parser.add_argument("--pdftotext", type=Path)
     parser.add_argument("--output", type=Path)
@@ -63,7 +66,7 @@ def main() -> int:
                 errors.append("pdftotext not found; pass --pdftotext")
             else:
                 completed = subprocess.run(
-                    [pdftotext, "-layout", str(args.pdf), "-"],
+                    [pdftotext, "-layout", "-enc", "UTF-8", str(args.pdf), "-"],
                     check=True,
                     capture_output=True,
                 )
@@ -127,6 +130,15 @@ def main() -> int:
             f"body page count {body_pages} outside allowed range [{args.min_pages}, {args.max_pages}]"
         )
 
+    appendix_pages = max(0, len(page_texts) - appendix_index) if appendix_index is not None else 0
+    if not args.draft and appendix_index is not None and not (
+        args.appendix_min_pages <= appendix_pages <= args.appendix_max_pages
+    ):
+        errors.append(
+            f"appendix page count {appendix_pages} outside allowed range "
+            f"[{args.appendix_min_pages}, {args.appendix_max_pages}]"
+        )
+
     result = {
         "status": "pass" if not errors else "fail",
         "mode": "draft" if args.draft else "final",
@@ -136,7 +148,9 @@ def main() -> int:
         "body_start_page": body_start + 1 if page_texts else None,
         "appendix_page": appendix_index + 1 if appendix_index is not None else None,
         "body_pages": body_pages,
+        "appendix_pages": appendix_pages,
         "allowed_range": [args.min_pages, args.max_pages],
+        "appendix_allowed_range": [args.appendix_min_pages, args.appendix_max_pages],
         "section_starts": section_starts,
         "errors": errors,
     }

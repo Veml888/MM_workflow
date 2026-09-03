@@ -54,7 +54,7 @@ description: 全国大学生数学建模竞赛（CUMCM）全流程编排入口�
 | 3 | 编程实现 | `mm-coding` | `code/`、`results/`、`docs/03-results-report.md` |
 | 4 | 论文策划定稿（初稿审计 + 结构规划 + 页面预算 + 图件骨架） | `mm-orchestrator` | `paper/draft-audit.md`、`paper/draft-metrics.json`、`paper/structure-plan.md`、`paper/page-budget.json`、`paper/figure-requirements.md`、`paper/writing-gates.md` |
 | 5a | 数据图（按需） | `mm-figures` | `figures/*.png/pdf/svg`、`docs/04-figures-report.md` |
-| 5b | 非数据图（逻辑/框架/机理图 + 视觉示意图；完整论文必做示意图） | `mm-graphics` | `figures/*.tex|pdf|png`（逻辑图）、`figures/*.png`（视觉图，可选 `*.svg`）、`docs/05-diagrams-report.md`、`docs/05-visual-report.md` |
+| 5b | 非数据图（逻辑/框架/机理图 + 场景/空间精确示意图，按题需要） | `mm-graphics` | `figures/*.tex|pdf|png`、`docs/05-diagrams-report.md` |
 | 6a | 论文终稿第一轮（完整成稿） | `mm-paper-writing` | `paper/论文.tex`、`paper/论文.pdf`、`paper/skill-read-receipt-pass-1.json`、`paper/pass-1-audit.md` |
 | 6b | 论文终稿第二轮（重新完整读全部模块后独立终审） | `mm-paper-writing` | 修订后的 `paper/论文.tex`、`paper/论文.pdf`、`paper/skill-read-receipt-pass-2.json`、`paper/pass-2-audit.md` |
 | 7 | 验收 | `mm-verification` | `docs/06-verification-report.md` |
@@ -99,7 +99,7 @@ description: 全国大学生数学建模竞赛（CUMCM）全流程编排入口�
   ]
 }
 ```
-- `paper/figure-requirements.md`（**空骨架**，只建框不填内容）：分"数据图 / 非数据图"两区，并写明图件边界规则（见下）。**具体画哪些图、图种、锚点由 `mm-figures` / `mm-graphics` 自行决定并填入对应区**；编排器只保证骨架存在、两区清晰、边界一致，不预决定。视觉示意图（如题目需要）由 `mm-graphics` 视觉示意图路线落实。
+- `paper/figure-requirements.md`（**空骨架**，只建框不填内容）：分"数据图 / 非数据图"两区，并写明图件边界规则（见下）。**具体画哪些图、图种、锚点由 `mm-figures` / `mm-graphics` 自行决定并填入对应区**；编排器只保证骨架存在、两区清晰、边界一致，不预决定。场景/空间类精确示意图（如题目需要）由 `mm-graphics` 按题面事实用 TikZ/SVG 绘制。
 - `paper/writing-gates.md`：写入 G-1~G-5 的初始 `pending` 状态（G-1 必读已读 / G-2 图表齐全 / G-3 上游数据 / G-4 结构拟定 / G-5 工具就绪），供论文终稿阶段的写作前门禁使用。
 
 正式策划结束前运行 `python <mm-orchestrator目录>/scripts/validate_paper_plan.py paper/page-budget.json --root .`。只有脚本 exit 0、结构计划无占位、初稿审计完成且相关产物已登记哈希时，才能把 `stages.paper_plan.status` 置为 `complete`；否则不得进入图件阶段。
@@ -108,7 +108,7 @@ description: 全国大学生数学建模竞赛（CUMCM）全流程编排入口�
 
 - 数据图（基于真实结果：折线/柱状/散点/热力/曲面/灵敏度/多帧）→ `mm-figures`；
 - 技术路线、总体框架、模型结构、指标体系、变量关系、验证闭环、复杂自研算法流程图 → `mm-graphics`（常规求解步骤用正文，不画流程图）；
-- 题目场景、空间关系、对象交互、算法原理隐喻等非数据、非流程纯视觉示意图 → `mm-graphics` 的视觉示意图路线（按题需要，无适用场景标记 `n_a`）。
+- 题目场景、空间关系等需按真实几何/坐标呈现的示意图 → `mm-graphics` 精确路线（TikZ/SVG，按题面事实绘制；无适用场景不画）
 
 论文固定结构（策划与终稿共用，详见 `mm-paper-writing/references/common-paper-rules.md` 与 `references/writing-order.json`）：
 
@@ -128,7 +128,7 @@ AI 工具使用声明 / 参考文献 / 附录（不加顺序序号）
 - 论文终稿阶段固定连续调用 `mm-paper-writing` 两次。每次调用都先运行该 skill 的 `scripts/read_complete.py plan`，再按计划逐块读取 `references/writing-order.json` 登记的全部必读文件；每块必须出现 `READ-END`，并以本轮独立读取回执通过 `read_complete.py verify` 为准。第二次不得复用第一次回执、上下文或“已读”结论。
 - 第一次调用结束后生成 `paper/skill-read-receipt-pass-1.json` 与 `paper/pass-1-audit.md`，把 `paper_final.full_skill_passes` 记为 `1`，但 `paper_final.status` 保持 `in_progress`。随后立即进行第二次独立调用，以第一次终稿为审查和修订对象，重新运行双遍编译及全部专项机检，生成第二轮回执与审计。
 - 两轮审计都必须覆盖注册表中的每个必读文件及其全部二/三级标题，并通过 `validate_requirement_coverage.py`。只有第二次无阻断项、`paper_final.full_skill_passes=2`、两轮回执和审计路径均已登记哈希时，才能把 `paper_final.status` 置为 `complete` 并进入 `mm-verification`；否则继续留在论文终稿阶段。
-- `mm-graphics` 负责技术路线、总体框架、模型结构、指标体系、变量关系、验证闭环（逻辑图，TikZ）与题目场景/空间/交互/算法隐喻（视觉示意图，imagegen）；只有复杂自研算法才允许算法流程图。题目需要场景/机理视觉示意时，可由 `mm-graphics` 的视觉示意图路线生成纯视觉示意图；无适用场景标记 `n_a`。
+- `mm-graphics` 负责技术路线、总体框架、模型结构、指标体系、变量关系、验证闭环（逻辑图，TikZ），以及需按真实几何/坐标呈现的场景与空间关系示意（TikZ/SVG 精确路线，按题面事实绘制；不使用 AI 图像生成）；只有复杂自研算法才允许算法流程图。
 - 每个阶段开始前，回显：当前阶段、负责 skill、将读取的上游报告、将产出的文件。
 - 每个阶段开始前输出 GATE 确认：上游产物存在、必读规范已读（引用原文）、计划产出明确；缺上游先补齐再进下一阶段。
 - 每阶段结束后更新 `project-manifest.json` 中自己负责的阶段状态、产物哈希和版本。发生回写时追加 `change_log`，记录原因和受影响 ID。

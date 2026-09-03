@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import sys
 
 # --- UTF-8 输出保护（防乱码）---
 if hasattr(sys, "stdout") and hasattr(sys.stdout, "reconfigure"):

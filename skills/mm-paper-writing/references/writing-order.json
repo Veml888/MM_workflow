@@ -42,7 +42,6 @@
     "references/chapters/09-附录.md",
     "references/layout-and-compilation.md",
     "references/language-and-storyline.md",
-    "references/second-pass-review.md",
     "../mm-orchestrator/references/cumcm-shared-policy.md",
     "../mm-orchestrator/references/project-manifest-contract.md"
   ],
@@ -60,7 +59,7 @@
   },
   "limits": {
     "skill_max_bytes": 12000,
-    "module_max_bytes": 20000,
+    "module_max_bytes": 23000,
     "chunk_max_bytes": 7000
   }
 }

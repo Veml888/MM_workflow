@@ -23,7 +23,6 @@ PROJECT_ROOT/
 │   ├── 03-results-report.md       # 结果报告（代码、数值结果）
 │   ├── 04-figures-report.md       # 数据图说明
 │   ├── 05-diagrams-report.md      # 流程图/机理图说明（mm-graphics）
-│   ├── 05-visual-report.md        # 纯视觉示意图说明（mm-graphics 视觉示意图路线）
 │   └── 06-verification-report.md  # 验收报告
 ├── code/                          # 求解代码（按子问题组织）
 │   ├── problem1.py
@@ -33,7 +32,6 @@ PROJECT_ROOT/
 ├── figures/                       # 全部图表
 │   ├── *.pdf / *.svg / *.png      # 数据图三格式
 │   ├── *.tex + *.pdf + *_600dpi.png # 流程/框架图（可选 *.svg）
-│   └── *.png（可选 *.svg）         # 纯视觉示意图
 └── paper/                         # 论文（LaTeX 为主）
     ├── structure-plan.md          # 策划：章节骨架与逐问论证链（编排器产出）
     ├── page-budget.json           # 策划：目标28~29页、允许27~30页的机器可读预算
@@ -62,14 +60,13 @@ PROJECT_ROOT/
 | 编程实现 | `docs/02-modeling-report.md` | `code/`、`results/`、`docs/03-results-report.md` |
 | 论文策划 | `docs/01~03`、`results/`、`plan.md`、可选调用前初稿 | 初稿冻结与审计、`paper/structure-plan.md`、`paper/page-budget.json`、`paper/figure-requirements.md`、`paper/writing-gates.md`（pending） |
 | 图表生成 | `docs/03-results-report.md`、`results/`、`paper/figure-requirements.md` | `figures/*.pdf|svg|png`、`docs/04-figures-report.md` |
-| 非数据图（流程图/机理图 + 视觉示意图） | 题面、`docs/01~03`、`paper/figure-requirements.md` | `figures/*.tex|pdf|png`（逻辑图，可选 `*.svg`）、`figures/*.png`（视觉图）、`docs/05-diagrams-report.md`、`docs/05-visual-report.md` |
+| 非数据图（流程图/机理图 + 场景/空间精确示意图） | 题面、`docs/01~03`、`paper/figure-requirements.md` | `figures/*.tex|pdf|png`（可选 `*.svg`）、`docs/05-diagrams-report.md` |
 | 论文终稿 | 正式结构规划 + 页面预算 + 初稿审计 + 全部报告 + `figures/` + `results/` + G-1~G-5 全部 PASS | 新建 `paper/论文.tex`、`paper/论文.pdf`、`paper/content-gap-report.md`、`paper/page-audit.json` |
 | 验收 | 本次计划范围内的全部产物 + `project-manifest.json` | `docs/06-verification-report.md` |
 
 ## 命名约定
 
 - 报告一律 `NN-名称.md`，NN 为两位数序号，与阶段一一对应（05 有两个并列文件：diagrams 与 visual）。
-- 数据图、流程图和纯视觉图统一使用描述性英文或中文名称，禁止 `q1`、`q2`、`q3`、`q4` 或“问题一”等问题编号前缀。代码和结果文件仍可使用 `problem1.py`、`q1_result.csv` 等追踪编号。
-- 纯视觉示意图：`fig_scene_xxx`（题目理解场景图）、`fig_alg_xxx`（算法理解原理图）。
+- 数据图与非数据图统一使用描述性英文或中文名称，禁止 `q1`、`q2`、`q3`、`q4` 或“问题一”等问题编号前缀。代码和结果文件仍可使用 `problem1.py`、`q1_result.csv` 等追踪编号。
 - 代码文件 `problemN.py`（N 为子问题序号），公共工具 `utils.py`。
 - 数值结果与题面要求的输出格式一致（国赛常要求 `.xlsx`）。

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import sys
 
 # --- UTF-8 输出保护（防乱码）---
 if hasattr(sys, "stdout") and hasattr(sys.stdout, "reconfigure"):
@@ -55,6 +56,8 @@ def source_without_exemptions(text: str) -> str:
     text = re.sub(r"\\texttt\{[^{}]*\}", "", text)
     text = re.sub(r"\\url\{[^{}]*\}", "", text)
     text = re.sub(r"\\lstinline\{[^{}]*\}", "", text)
+    # 文献题名（thebibliography 中的 \bibitem 行）不适用禁用表达，剔除。
+    text = re.sub(r"\\bibitem\{[^{}]*\}.*", "", text)
     return text
 
 

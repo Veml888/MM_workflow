@@ -1,11 +1,11 @@
 ---
 name: mm-paper-writing
-description: CUMCM 论文撰写阶段。当用户需要撰写或接管国赛数模论文初稿，并完成摘要、问题重述、问题分析、模型假设、符号说明、模型的建立与求解、模型评价与推广、AI 使用声明、参考文献和附录终稿时使用。全流程须连续调用两次；每次必须完整读取注册表中的全部规范、按章节重读并独立完成编译审计。
+description: CUMCM 论文撰写阶段。当用户需要撰写国赛数模论文初稿、或接管已有初稿并完成摘要、问题重述、问题分析、模型假设、符号说明、模型的建立与求解、模型评价与推广、AI 使用声明、参考文献与附录的终稿时使用。产出 LaTeX 论文（paper/论文.tex|pdf），要求完整读取注册规范、按章节重读并独立编译审计。
 ---
 
 # 数学建模：竞赛论文撰写
 
-本文件只负责总控。章节细则、公共规则、排版规则和第二轮终审规则分别保存在 `references/`；不得凭本入口的概述直接开始写作。
+本文件只负责总控。章节细则、公共规则、排版规则和两轮独立终审协议分别保存在 `references/`；不得凭本入口的概述直接开始写作。
 
 **工具与路径（全部相对本 SKILL.md 所在目录解析，skills 目录整体搬移或换机无需改动）**：`<本skill目录>` 即本文件所在目录，`read_complete.py` 位于 `scripts/read_complete.py`；其他文件中的 `<mm-xxx目录>` 一律指同级兄弟目录 `../mm-xxx/`。脚本内部路径自解析、可在任意工作目录运行；但脚本参数中的相对路径相对当前工作目录解析，机检一律在 PROJECT_ROOT 下执行。
 
@@ -29,8 +29,8 @@ description: CUMCM 论文撰写阶段。当用户需要撰写或接管国赛数�
 - 正文页数控制（27–30 页，篇幅不足怎么补/超出怎么减）：`references/篇幅控制-playbook.md`
 - 十个实际论文章节：`references/chapters/00-摘要.md` 至 `references/chapters/09-附录.md`
 - 图表、公式、LaTeX、分页、编译和专项审计：`references/layout-and-compilation.md`
+  - **硬性纪律**：凡使用 `longtable`，必须配齐 `\endfirsthead` / `\endhead` / `\endfoot` / `\endlastfoot` 四件套；续页标题必带原表号（`\thetable`，形如“续表 N　原表题”）；末页底线 `\bottomrule` 只允许一条并放在 `\endfoot` 与 `\endlastfoot` 之间的末页页脚段内，表末数据行后不得再写第二个 `\bottomrule`。缺任一即视为未实现跨页续表，`audit_paper_tables.py` 的 T-5b 将 FAIL。
 - 去 AI 味、技术保真、故事线和冷读：`references/language-and-storyline.md`
-- 第二次调用独立终审：`references/second-pass-review.md`
 - 排版顺序、写作顺序、必读清单和章节重读映射：`references/writing-order.json`
 - 跨阶段共享策略与 manifest 契约：注册表列出的 `../mm-orchestrator/references/*` 文件。
 
@@ -51,8 +51,8 @@ description: CUMCM 论文撰写阶段。当用户需要撰写或接管国赛数�
 ## 两次独立调用
 
 - 第一轮完成全文、至少双遍编译和全部专项审计，生成 `paper/pass-1-audit.md` 与第一轮读取回执；`paper_final.status` 保持 `in_progress`。
-- 第二轮重新执行全量读取和就地重读，以第一轮终稿为审查对象，逐章修订并重跑全部审计，生成 `paper/pass-2-audit.md` 与第二轮读取回执。
-- 两轮审计必须列出每个必读文件及其全部二/三级标题，记录“已执行”或“不适用及理由”，并通过 `validate_requirement_coverage.py`。
+- 第二轮重新执行全量读取和就地重读，以第一轮终稿为审查对象，逐章修订并重跑全部审计，生成 `paper/pass-2-audit.md` 与第二轮读取回执。**第二轮不是只读抽查或快速润色**：对未改动的要求也必须逐项重新核实并记录证据，而非沿用第一轮”已通过”的结论。
+- 两轮审计必须列出每个必读文件及其全部二/三级标题，记录”已执行”或”不适用及理由”，并通过 `validate_requirement_coverage.py`。
 - 只有第二轮无阻断项、两轮各至少双遍编译、读取回执和要求覆盖均通过，才能设置 `full_skill_passes=2`、`paper_final.status=complete` 并进入 `mm-verification`。
 
 ## 产出与边界
