@@ -6,6 +6,8 @@ description: CUMCM 2026 交付验收阶段。当用户需要检查全流程产�
 <!-- READ-PREAMBLE:v1 -->
 
 > **本技能文件较长，务必先完整读取再执行。** ①先用 `read_complete.py` 量出本文件总行数、列出全部 `##/###` 标题并给出分块范围；②按 `[起始–结束]` 分块读取本文件，不要一次整读；③确认任一次读取无 `truncated`，且分块覆盖到文件末尾、所有标题都被读到；④在读全之前不执行本技能的任何动作；某段被截断就立即补读，读全后再开始。
+>
+> **工具与路径（全部相对本 SKILL.md 所在目录解析，skills 目录整体搬移或换机无需改动）**：`read_complete.py` 位于 `../mm-paper-writing/scripts/read_complete.py`；量取本文件行数/标题/分块用 `python ../mm-paper-writing/scripts/read_complete.py analyze --path <本文件路径>`；文中 `<mm-xxx目录>` 一律指同级兄弟目录 `../mm-xxx/`。脚本内部路径自解析、可在任意工作目录运行；但脚本参数中的相对路径（如 `paper/page-budget.json --root .`）相对当前工作目录解析，机检一律在 PROJECT_ROOT 下执行。
 
 <!-- /READ-PREAMBLE -->
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://codex.local/cumcm/project-manifest-2.0.schema.json",
+  "$id": "https://cumcm.local/cumcm/project-manifest-2.0.schema.json",
   "title": "CUMCM 2026 project manifest",
   "type": "object",
   "additionalProperties": true,
@@ -92,6 +92,8 @@
         "content_gap_report": {"type": "string", "minLength": 1},
         "compile_passes": {"type": "integer", "minimum": 0},
         "full_skill_passes": {"type": "integer", "enum": [0, 1, 2]},
+        "first_read_receipt": {"type": "string", "minLength": 1},
+        "second_read_receipt": {"type": "string", "minLength": 1},
         "first_pass_audit": {"type": "string", "minLength": 1},
         "second_pass_audit": {"type": "string", "minLength": 1}
       },
@@ -99,7 +101,7 @@
         {
           "if": {"properties": {"status": {"const": "complete"}}, "required": ["status"]},
           "then": {
-            "required": ["planned_body_pages", "final_body_pages", "length_audit", "content_gap_report", "compile_passes", "full_skill_passes", "first_pass_audit", "second_pass_audit"],
+            "required": ["planned_body_pages", "final_body_pages", "length_audit", "content_gap_report", "compile_passes", "full_skill_passes", "first_read_receipt", "second_read_receipt", "first_pass_audit", "second_pass_audit"],
             "properties": {
               "compile_passes": {"minimum": 4},
               "full_skill_passes": {"const": 2}

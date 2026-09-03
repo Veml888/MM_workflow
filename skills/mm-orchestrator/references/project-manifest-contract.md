@@ -65,7 +65,7 @@
 - `coding` 创建和维护 `implemented_models`、`results` 和 `validation_plans.execution`，并登记 `docs/03-results-report.md`。
 - `paper_plan`（论文策划，由 `mm-orchestrator` 产出）初始化空骨架时保持 `pending`；分析、建模和编程完成后冻结/登记可选初稿，创建 `paper/draft-audit.md`、`paper/draft-metrics.json`、正式 `structure-plan.md`、`page-budget.json`、`figure-requirements.md` 与 `writing-gates.md`。只有 `validate_paper_plan.py` exit 0、预算目标28～29页且产物哈希已登记时才能 `complete`。
 - `figures` 只创建数据图、`graphics` 创建非数据图（逻辑/框架/机理图 + 视觉示意图，含 `docs/05-visual-report.md`），二者只创建自己负责的图件、报告和 `figures[]` 记录，不修改论文源文件；缺少适用性时标记对应阶段为 `n_a`。
-- `paper_final` 独占 `paper/论文.tex`、`paper/论文.pdf` 的写入权；初稿基线只读且不得覆盖。完整流程必须独立调用 `mm-paper-writing` 两次，每次都重新完整读取该 skill、将 G-1~G-5 全部复核为 `pass`，生成对应轮次审计，并在该次调用内多轮编译直至正文27～30页和全部专项机检通过。第一轮结束保持 `in_progress`；第二轮通过后才可 `complete`。
+- `paper_final` 独占 `paper/论文.tex`、`paper/论文.pdf` 的写入权；初稿基线只读且不得覆盖。完整流程必须独立调用 `mm-paper-writing` 两次，每次都按其 `writing-order.json` 和 `read_complete.py` 重新完整读取全部必读模块，验证本轮独立读取回执，将 G-1~G-5 全部复核为 `pass`，生成对应轮次审计，并在该次调用内多轮编译直至正文27～30页和全部专项机检通过。第一轮结束保持 `in_progress`；第二轮通过后才可 `complete`。
 - `verification` 只审计、创建 `rework[]` 和验收报告，不直接修改上游产物；`conditional` 只允许非关键问题。
 - 下游阶段可以引用这些 ID、补充自己负责的字段；发现上游事实错误时必须通过 `change_log` 发起回写，不得静默改写。
 - 阶段置为 `complete` 前，必须登记本阶段必需产物的 SHA256 和版本；缺失、占位或门禁未通过时不得标记完成。
@@ -81,4 +81,4 @@
 
 - `paper_plan.status=complete` 时必须登记：`report`、`gates`、`page_budget`、`draft_audit`、`draft_metrics`、`planned_body_pages`（28或29）、本阶段产物哈希和版本。
 - `paper_final.draft_mode` 只能是 `retained`、`partial`、`invalidated`、`none`。有初稿时登记 `draft_path`、`draft_sha256`、`draft_body_pages`；无初稿时三项使用 `null`。
-- `paper_final.status=complete` 时必须登记：`planned_body_pages`、`final_body_pages`（27～30）、`length_audit`、`content_gap_report`、`compile_passes`（两轮合计至少4）、`full_skill_passes=2`、`first_pass_audit`、`second_pass_audit`、论文TeX/PDF及两轮审计文件的哈希与版本。缺任一字段、任一轮未完整读取 skill、页数越界或任一轮专项脚本非零，不得标记完成，也不得进入 `mm-verification`。
+- `paper_final.status=complete` 时必须登记：`planned_body_pages`、`final_body_pages`（27～30）、`length_audit`、`content_gap_report`、`compile_passes`（两轮合计至少4）、`full_skill_passes=2`、`first_read_receipt`、`second_read_receipt`、`first_pass_audit`、`second_pass_audit`、论文TeX/PDF、两轮读取回执及两轮审计文件的哈希与版本。缺任一字段、任一轮读取回执或要求覆盖校验非零、页数越界或任一轮专项脚本非零，不得标记完成，也不得进入 `mm-verification`。

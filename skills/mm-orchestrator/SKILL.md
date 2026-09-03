@@ -6,6 +6,8 @@ description: 全国大学生数学建模竞赛（CUMCM 2026）全流程编排入
 <!-- READ-PREAMBLE:v1 -->
 
 > **本技能文件较长，务必先完整读取再执行。** ①先用 `read_complete.py` 量出本文件总行数、列出全部 `##/###` 标题并给出分块范围；②按 `[起始–结束]` 分块读取本文件，不要一次整读；③确认任一次读取无 `truncated`，且分块覆盖到文件末尾、所有标题都被读到；④在读全之前不执行本技能的任何动作；某段被截断就立即补读，读全后再开始。
+>
+> **工具与路径（全部相对本 SKILL.md 所在目录解析，skills 目录整体搬移或换机无需改动）**：`read_complete.py` 位于 `../mm-paper-writing/scripts/read_complete.py`；量取本文件行数/标题/分块用 `python ../mm-paper-writing/scripts/read_complete.py analyze --path <本文件路径>`；文中 `<mm-xxx目录>` 一律指同级兄弟目录 `../mm-xxx/`。脚本内部路径自解析、可在任意工作目录运行；但脚本参数中的相对路径（如 `paper/page-budget.json --root .`）相对当前工作目录解析，机检一律在 PROJECT_ROOT 下执行。
 
 <!-- /READ-PREAMBLE -->
 
@@ -53,8 +55,8 @@ description: 全国大学生数学建模竞赛（CUMCM 2026）全流程编排入
 | 4 | 论文策划定稿（初稿审计 + 结构规划 + 页面预算 + 图件骨架） | `mm-orchestrator` | `paper/draft-audit.md`、`paper/draft-metrics.json`、`paper/structure-plan.md`、`paper/page-budget.json`、`paper/figure-requirements.md`、`paper/writing-gates.md` |
 | 5a | 数据图（按需） | `mm-figures` | `figures/*.png/pdf/svg`、`docs/04-figures-report.md` |
 | 5b | 非数据图（逻辑/框架/机理图 + 视觉示意图；完整论文必做示意图） | `mm-graphics` | `figures/*.tex|pdf|png`（逻辑图）、`figures/*.png`（视觉图，可选 `*.svg`）、`docs/05-diagrams-report.md`、`docs/05-visual-report.md` |
-| 6a | 论文终稿第一轮（完整成稿） | `mm-paper-writing` | `paper/论文.tex`、`paper/论文.pdf`、`paper/pass-1-audit.md` |
-| 6b | 论文终稿第二轮（重新完整读 skill 后独立终审） | `mm-paper-writing` | 修订后的 `paper/论文.tex`、`paper/论文.pdf`、`paper/pass-2-audit.md` |
+| 6a | 论文终稿第一轮（完整成稿） | `mm-paper-writing` | `paper/论文.tex`、`paper/论文.pdf`、`paper/skill-read-receipt-pass-1.json`、`paper/pass-1-audit.md` |
+| 6b | 论文终稿第二轮（重新完整读全部模块后独立终审） | `mm-paper-writing` | 修订后的 `paper/论文.tex`、`paper/论文.pdf`、`paper/skill-read-receipt-pass-2.json`、`paper/pass-2-audit.md` |
 | 7 | 验收 | `mm-verification` | `docs/06-verification-report.md` |
 
 ### 流程策划：初稿接管、结构规划与图件骨架
@@ -66,7 +68,7 @@ description: 全国大学生数学建模竞赛（CUMCM 2026）全流程编排入
 - `paper/draft-audit.md`：逐章将初稿内容标记为“保留 / 改写 / 删除 / 补充”，核对题意、最终模型、公式符号、真实结果、图件锚点、题面覆盖、占位符与模板化段落；冲突一律以上游报告、结果和 manifest 为准。
 - `paper/draft-metrics.json`：记录初稿模式、路径、SHA256、总页数/正文页数、各章起始页和可编译状态；没有初稿时仍生成并写明 `mode=none`。
 
-- `paper/structure-plan.md`（内容，由编排器建）：章节骨架 + 逐问论证链 + 预计篇幅。章节按"八段式骨架"；每问写清核心论证链（承接 → 建模 → 求解 → 结果表 → 结果分析）与预计篇幅，并建立"题面要求/子问题 → 正文小节 → 模型变量与约束 → 结果证据 → 最终回答"的追踪关系（供 `mm-verification` 逐项验收）。
+- `paper/structure-plan.md`（内容，由编排器建）：章节骨架 + 逐问论证链 + 预计篇幅。章节按固定论文结构；每问写清核心论证链（承接 → 建模 → 求解 → 结果表 → 结果分析）与预计篇幅，并建立"题面要求/子问题 → 正文小节 → 模型变量与约束 → 结果证据 → 最终回答"的追踪关系（供 `mm-verification` 逐项验收）。
 - `paper/page-budget.json`（机器可读预算）：`target_body_pages` 只能为 28 或 29，`allowed_range` 固定 `[27,30]`；每章记录 `min_pages/target_pages/max_pages`、真实 `source_paths` 与 `evidence_ids`，各章目标页数之和必须等于总目标。预算按问题难度和证据量分配，不平均分配、不以空泛内容补页。
 
 正式预算使用以下内联结构（初始化时可为空，定稿时不得保留占位符）：
@@ -108,7 +110,7 @@ description: 全国大学生数学建模竞赛（CUMCM 2026）全流程编排入
 - 技术路线、总体框架、模型结构、指标体系、变量关系、验证闭环、复杂自研算法流程图 → `mm-graphics`（常规求解步骤用正文，不画流程图）；
 - 题目场景、空间关系、对象交互、算法原理隐喻等非数据、非流程纯视觉示意图 → `mm-graphics` 的视觉示意图路线（按题需要，无适用场景标记 `n_a`）。
 
-八段式骨架（策划与终稿共用，详见 `mm-paper-writing` SKILL.md"整体八段式骨架"）：
+论文固定结构（策划与终稿共用，详见 `mm-paper-writing/references/common-paper-rules.md` 与 `references/writing-order.json`）：
 
 ```text
 一、问题重述（1.1 背景 / 1.2 提出）
@@ -123,9 +125,9 @@ AI 工具使用声明 / 参考文献 / 附录（不加顺序序号）
 ### 第 4 步：按序调用阶段 skill
 
 - 先完成分析、建模和编程，再正式完成初稿审计、结构计划、页面预算与图件骨架；`validate_paper_plan.py` 必须 exit 0 且 `paper_plan.status=complete`。随后 `mm-figures` 与 `mm-graphics` 两个分支按适用性并行调用，全部完成或标记 `n_a` 后再进入论文终稿。
-- 论文终稿阶段固定连续调用 `mm-paper-writing` 两次。两次调用都必须按该 skill 顶部 `READ-PREAMBLE` 从头量行、列标题、分块完整读取到文件末尾，并独立执行该 skill 的全部适用步骤；第二次不得复用第一次的“已读”结论或只做快速抽查。
-- 第一次调用结束后生成 `paper/pass-1-audit.md`，把 `paper_final.full_skill_passes` 记为 `1`，但 `paper_final.status` 保持 `in_progress`。随后立即进行第二次独立调用，以第一次终稿为审查和修订对象，重新运行双遍编译及全部专项机检，生成 `paper/pass-2-audit.md`。
-- 只有第二次调用无阻断项、`paper_final.full_skill_passes=2`、`paper_final.second_pass_audit` 指向已登记哈希的 `paper/pass-2-audit.md`，且两轮审计均覆盖 `mm-paper-writing` 的全部二/三级标题时，才能把 `paper_final.status` 置为 `complete` 并进入 `mm-verification`；否则继续留在论文终稿阶段。
+- 论文终稿阶段固定连续调用 `mm-paper-writing` 两次。每次调用都先运行该 skill 的 `scripts/read_complete.py plan`，再按计划逐块读取 `references/writing-order.json` 登记的全部必读文件；每块必须出现 `READ-END`，并以本轮独立读取回执通过 `read_complete.py verify` 为准。第二次不得复用第一次回执、上下文或“已读”结论。
+- 第一次调用结束后生成 `paper/skill-read-receipt-pass-1.json` 与 `paper/pass-1-audit.md`，把 `paper_final.full_skill_passes` 记为 `1`，但 `paper_final.status` 保持 `in_progress`。随后立即进行第二次独立调用，以第一次终稿为审查和修订对象，重新运行双遍编译及全部专项机检，生成第二轮回执与审计。
+- 两轮审计都必须覆盖注册表中的每个必读文件及其全部二/三级标题，并通过 `validate_requirement_coverage.py`。只有第二次无阻断项、`paper_final.full_skill_passes=2`、两轮回执和审计路径均已登记哈希时，才能把 `paper_final.status` 置为 `complete` 并进入 `mm-verification`；否则继续留在论文终稿阶段。
 - `mm-graphics` 负责技术路线、总体框架、模型结构、指标体系、变量关系、验证闭环（逻辑图，TikZ）与题目场景/空间/交互/算法隐喻（视觉示意图，imagegen）；只有复杂自研算法才允许算法流程图。题目需要场景/机理视觉示意时，可由 `mm-graphics` 的视觉示意图路线生成纯视觉示意图；无适用场景标记 `n_a`。
 - 每个阶段开始前，回显：当前阶段、负责 skill、将读取的上游报告、将产出的文件。
 - 每个阶段开始前输出 GATE 确认：上游产物存在、必读规范已读（引用原文）、计划产出明确；缺上游先补齐再进下一阶段。
