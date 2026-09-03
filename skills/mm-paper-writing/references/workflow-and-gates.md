@@ -12,14 +12,14 @@
 ## 输入与产出
 - 输入：编排器正式定稿的 `paper/structure-plan.md`、`paper/page-budget.json`、`paper/draft-audit.md`、`paper/draft-metrics.json` 与 `paper/writing-gates.md`；`paper/figure-requirements.md`（由图件 skills 填入）；可选只读初稿 `paper/draft-baseline.tex|pdf`；全部 `docs/01~05`、`figures/`、`results/`、`plan.md`、`project-manifest.json`。
 - 产出：`paper/论文.tex`、`paper/论文.pdf`、`paper/page-audit.json` 与 `paper/content-gap-report.md`。唯一终稿格式为 LaTeX；初稿基线不得被覆盖或作为终稿提交。
-- 跨阶段不变量遵循 `../../mm-orchestrator/references/cumcm-2026-shared-policy.md`；论文结构、写作、字体、排版、引用、附录和终稿交付细则以本 skill 注册的必读模块为准。交接字段遵循 `../../mm-orchestrator/references/project-manifest-contract.md`。
+- 跨阶段不变量遵循 `../../mm-orchestrator/references/cumcm-shared-policy.md`；论文结构、写作、字体、排版、引用、附录和终稿交付细则以本 skill 注册的必读模块为准。交接字段遵循 `../../mm-orchestrator/references/project-manifest-contract.md`。
 
 ## 工作流
 
 ### Step 0：输出格式（默认 LaTeX）
 
 - **本 skill 默认且唯一输出 LaTeX**：`paper/论文.tex` + xelatex 编译 `paper/论文.pdf`，不再提供 Word/DOCX 排版路径。若用户明确要求 Word/DOCX，明确告知：Word 排版流水线已移除，需另用旧版工具或自行转换，不在本 skill 范围内。
-- 写作前先确认本机已装 TeX 发行版（MiKTeX/TeX Live），用其自带的 `xelatex` 引擎编译（当前环境 xelatex 不在 PATH，需定位 MiKTeX 安装目录下的 `xelatex.exe`）；缺失时先安装，安装完成后再动笔。
+- 写作前先确认本机已装 TeX 发行版（MiKTeX/TeX Live），用其自带的 `xelatex` 引擎编译（当前环境 xelatex 不在 PATH，需定位本机已装发行版的 `xelatex.exe`）：**用 `where xelatex` / `shutil.which` 或 `render_tikz.py` 的定位逻辑找到本机已装的那个（含常见 MiKTeX 路径），找不到就把它加入 PATH 或传绝对路径——不要自动下载安装新的 TeX 发行版**；确认本机确实没有 TeX 才暂停并告知用户。
 
 > 结构规划（`paper/structure-plan.md`）由编排器建；图件清单（`paper/figure-requirements.md`）由编排器建骨架、`mm-figures`/`mm-graphics` 填内容；写作门禁初始状态（`paper/writing-gates.md`）由编排器初始化。本 skill 只负责终稿写作，并在写作前核对写作门禁。
 
@@ -48,7 +48,7 @@
 
 - 写作前完整读取注册表中的公共要求、十个章节规范、图表排版、语言故事线、双轮终审和跨阶段不变量，确认页边距、页数、页码、附录和匿名要求。
 - 运行 `python <mm-orchestrator目录>/scripts/validate_paper_plan.py paper/page-budget.json --root .`，确认 `paper_plan.status=complete`；失败时停止写作并返回论文策划阶段，不得在终稿阶段临时猜测页面分配。
-- 固定按 CUMCM 2026 结构与中文论文规范执行，见 `common-paper-rules.md` 与 `writing-order.json`，并以编排器产出的 `paper/structure-plan.md` 为章节骨架与逐问论证链。若用户提供官方模板/格式要求，以官方为准并记录覆盖原因。
+- 固定按 CUMCM 规范与中文论文规范执行，见 `common-paper-rules.md` 与 `writing-order.json`，并以编排器产出的 `paper/structure-plan.md` 为章节骨架与逐问论证链。若用户提供官方模板/格式要求，以官方为准并记录覆盖原因。
 - 确认摘要排版目标：主标题与摘要标题均为三号，整页但不过页、加粗关键方法/结论、无目录、页码从摘要页起；官方模板或用户另有明确字号时记录覆盖原因。
 
 ### Step 2：规划各节内容来源
@@ -85,7 +85,7 @@
 - **推导链自检**：每问模型建立必须形成闭环推导链——变量定义 → 基础公式（给出机理/统计/数据形态来源）→ 本题化改造 → 目标与约束；纯经验公式必须说明来源，后一条公式须解决前一条公式尚未解决的困难；写完模型节后逐条自检"这条公式从哪来、为什么需要它"。
 - **求解展示方式**：成熟求解器简洁但完整地写明模型性质、算法/求解器、软件版本、关键参数、容差或终止条件、求解状态和输出；常规算法用连续段落或普通编号说明输入、核心步骤和输出；智能优化或复杂自研算法进一步说明编码、初始化、目标/适应度、更新规则、参数来源、随机种子、独立运行和收敛证据。只有具有实质分支、循环、状态更新或终止机制的复杂自研算法才使用流程图；不得给每问机械设置相同的"求解流程"小节。
 - **反模式**：四问小节标题完全一致（如每问都出现"建模思路"）即模板化；承接段不设标题，小节标题随问拟定。
-- **问题重述与分析的自然篇幅**：问题背景和逐问重述按题目数量、对象复杂度及输入输出边界自然展开，不设置最低占页率；`1.1 问题背景`不得只写可替换到任意题目的短套话。问题分析只有在缺少任务边界、数学类型、主要困难、数据条件、方法依据、跨问依赖、验证方式或交付形式时才补写，不得为填页重复题意。具体执行 `chapters/01-问题重述.md` 与 `chapters/02-问题分析.md`。
+- **问题重述与分析的自然篇幅**：问题背景和逐问重述按题目数量、对象复杂度及输入输出边界自然展开，不设置最低占页率；`1.1 问题背景`不得只写可替换到任意题目的短套话。问题分析只有在缺少任务边界、数学类型、主要困难、数据条件、方法依据、跨问依赖、验证方式或交付形式时才补写，不得为填页重复题意。具体执行 `chapters/01-问题重述.md` 与 `chapters/02-问题分析.md`。**若正文整体不足 27 页，按 `篇幅控制-playbook.md` 处理，不要把"补篇幅"误解为"只能加长问题重述/问题分析"——那两章恰恰是最不该注水的**。
 
 **输出要求**：摘要页、图表数量、正文27～30页、字体、数字一致和匿名要求均按注册模块执行；跨阶段真实性与追踪遵循共享不变量。第一次调用即使全部脚本通过也只能保持 `paper_final.status=in_progress` 并登记 `full_skill_passes=1`。只有第二次独立调用再次完整读取全部注册模块、完成全部适用要求，且 `check_paper_length.py` 与全部专项脚本 exit 0、读取回执、要求覆盖、`page-audit.json`、`content-gap-report.md`、两轮回执和两轮审计均已生成并登记哈希、两轮各自至少完成两遍稳定编译时，才能把 `paper_final.status` 置为 `complete`，并登记 `full_skill_passes=2` 与 `second_pass_audit`。同时登记初稿模式/SHA256/基线页数、计划页数、最终正文页数、页数审计路径、缺口报告路径和两轮编译遍数。
 

@@ -4,10 +4,18 @@
 from __future__ import annotations
 
 import argparse
+import os
 import hashlib
 import json
 import re
 import sys
+
+# --- UTF-8 输出保护（防乱码）---
+if hasattr(sys, "stdout") and hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys, "stderr") and hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+# --- /UTF-8 输出保护 ---
 from pathlib import Path
 
 
@@ -72,6 +80,49 @@ def resolve_relative(relative: str) -> Path:
     if not path.is_file():
         raise ValueError(f"required file does not exist: {relative} -> {path}")
     return path
+
+
+def _ledger_path(path: Path) -> Path:
+    return path.resolve()
+
+
+def load_ledger(path: Path) -> dict:
+    if not path.exists():
+        return {"schema_version": "1.0", "reads": []}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"ledger is not valid JSON: {path}: {exc}") from exc
+    if not isinstance(data, dict):
+        raise ValueError("ledger root must be an object")
+    reads = data.get("reads")
+    if not isinstance(reads, list):
+        raise ValueError("ledger.reads must be a list")
+    return data
+
+
+def save_ledger(path: Path, data: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def record_read(path: Path, relative: str, start: int, end: int, sha256: str) -> None:
+    data = load_ledger(path)
+    entry = {"path": relative, "start": start, "end": end, "sha256": sha256,
+             "end_marker_seen": True}
+    key = lambda r: (r.get("path"), r.get("start"), r.get("end"))
+    reads = [r for r in data["reads"] if not (r.get("path") == relative and r.get("start") == start and r.get("end") == end)]
+    reads.append(entry)
+    reads.sort(key=lambda r: (str(r.get("path")), int(r.get("start", 0))))
+    data["reads"] = reads
+    save_ledger(path, data)
+
+
+def ledger_reads(ledger: dict) -> set:
+    out = set()
+    for r in ledger.get("reads", []):
+        out.add((str(r.get("path")), int(r.get("start")), int(r.get("end"))))
+    return out
 
 
 def expected_paths(registry: dict) -> list[str]:
@@ -164,6 +215,45 @@ def command_chunk(args: argparse.Namespace) -> int:
     for number in range(args.start, args.end + 1):
         print(f"{number:04d}: {lines[number - 1]}")
     print(f"READ-END path={args.path} range={args.start}-{args.end} sha256={item['sha256']}")
+    if getattr(args, "session", None):
+        record_read(Path(args.session), args.path, args.start, args.end, item["sha256"])
+    return 0
+
+
+def command_write_receipt(args: argparse.Namespace) -> int:
+    """从读取账本生成回执；账本必须覆盖全部必读文件的所有分块。"""
+    plan = build_plan()
+    session = Path(args.session)
+    ledger = load_ledger(session)
+    reads = ledger_reads(ledger)
+    expected = set()
+    for item in plan["files"]:
+        for chunk in item["chunks"]:
+            expected.add((item["path"], chunk["start"], chunk["end"]))
+    missing = sorted(expected - reads)
+    if missing:
+        raise ValueError(f"ledger is incomplete; missing {len(missing)} chunk(s): "
+                         + ", ".join(f"{p} [{s}-{e}]" for p, s, e in missing[:10]))
+    receipt = {
+        "schema_version": "1.0",
+        "pass": args.pass_number,
+        "registry_sha256": plan["registry_sha256"],
+        "ledger_sha256": digest(session.read_bytes()),
+        "files": [],
+    }
+    for item in plan["files"]:
+        chunks = [dict(c, end_marker_seen=True) for c in item["chunks"]]
+        receipt["files"].append({
+            "path": item["path"],
+            "sha256": item["sha256"],
+            "headings_seen": item["headings"],
+            "chunks": chunks,
+        })
+    out = Path(args.receipt)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(receipt, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(json.dumps({"status": "written", "receipt": str(out),
+                      "ledger": str(session), "files": len(plan["files"])}, ensure_ascii=False))
     return 0
 
 
@@ -197,6 +287,24 @@ def command_verify(args: argparse.Namespace) -> int:
         raise ValueError("receipt pass must be 1 or 2")
     if receipt.get("registry_sha256") != plan["registry_sha256"]:
         raise ValueError("receipt registry hash does not match current registry")
+    session = Path(args.session).resolve()
+    if not session.exists():
+        raise ValueError(f"read session ledger missing: {session}. "
+                         "Every chunk must be read via `read_complete.py chunk --session` before verifying.")
+    ledger = load_ledger(session)
+    ledger_sha = digest(session.read_bytes())
+    if receipt.get("ledger_sha256") != ledger_sha:
+        raise ValueError("receipt ledger hash does not match the session ledger; "
+                         "receipt must be produced by `read_complete.py write-receipt` from that ledger")
+    expected_chunks: set = set()
+    for item in plan["files"]:
+        for chunk in item["chunks"]:
+            expected_chunks.add((item["path"], chunk["start"], chunk["end"]))
+    reads = ledger_reads(ledger)
+    unread = sorted(expected_chunks - reads)
+    if unread:
+        raise ValueError(f"session ledger is missing {len(unread)} required chunk(s): "
+                         + ", ".join(f"{p} [{s}-{e}]" for p, s, e in unread[:10]))
     expected = {item["path"]: item for item in plan["files"]}
     actual_list = receipt.get("files")
     if not isinstance(actual_list, list):
@@ -244,12 +352,19 @@ def parser() -> argparse.ArgumentParser:
     chunk.add_argument("--path", required=True)
     chunk.add_argument("--start", required=True, type=int)
     chunk.add_argument("--end", required=True, type=int)
+    chunk.add_argument("--session", default=None, help="append proof to this read-session ledger")
     chunk.set_defaults(func=command_chunk)
     template = sub.add_parser("template")
     template.add_argument("--pass", dest="pass_number", required=True, type=int, choices=(1, 2))
     template.set_defaults(func=command_template)
+    wr = sub.add_parser("write-receipt")
+    wr.add_argument("--pass", dest="pass_number", required=True, type=int, choices=(1, 2))
+    wr.add_argument("--receipt", required=True)
+    wr.add_argument("--session", required=True)
+    wr.set_defaults(func=command_write_receipt)
     verify = sub.add_parser("verify")
     verify.add_argument("--receipt", required=True)
+    verify.add_argument("--session", required=True, help="read-session ledger used to prove chunks were read")
     verify.set_defaults(func=command_verify)
     return root
 

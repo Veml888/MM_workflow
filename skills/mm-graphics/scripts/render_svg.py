@@ -6,6 +6,13 @@ import argparse
 import math
 import re
 import sys
+
+# --- UTF-8 输出保护（防乱码）---
+if hasattr(sys, "stdout") and hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys, "stderr") and hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+# --- /UTF-8 输出保护 ---
 import xml.etree.ElementTree as ET
 from pathlib import Path
 

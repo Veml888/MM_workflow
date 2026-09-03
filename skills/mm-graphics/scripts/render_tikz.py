@@ -24,27 +24,56 @@ def find_tool(name: str, explicit: str | None) -> str:
             return str(path)
         raise FileNotFoundError(f"Tool not found: {path}")
 
+    # ① PATH（Git Bash / 系统 PATH）
     found = shutil.which(name)
     if found:
         return found
 
+    # ② 穷举本机常见 TeX 发行版安装位置（按优先级）
+    candidates = []
     if os.name == "nt":
+        # 用户机器已知安装位置（最高优先，优先命中；即使 PATH/LOCALAPPDATA 异常也能找到）
+        known = [
+            r"C:\Users\32530\AppData\Local\Programs\MiKTeX",
+            r"C:\Program Files\MiKTeX",
+            r"C:\Program Files (x86)\MiKTeX",
+        ]
         local = os.environ.get("LOCALAPPDATA")
+        prog = os.environ.get("ProgramFiles")
+        prog_x86 = os.environ.get("ProgramFiles(x86)")
         if local:
-            candidate = (
-                Path(local)
-                / "Programs"
-                / "MiKTeX"
-                / "miktex"
-                / "bin"
-                / "x64"
-                / f"{name}.exe"
-            )
-            if candidate.is_file():
-                return str(candidate)
+            known.insert(1, str(Path(local) / "Programs" / "MiKTeX"))
+        if prog:
+            known.append(str(Path(prog) / "MiKTeX"))
+        if prog_x86:
+            known.append(str(Path(prog_x86) / "MiKTeX"))
+        # 每个根目录下穷举 MiKTeX bin 相对路径（find_tool 会自动拼 name.exe）
+        miktex_rel = [
+            "miktex/bin/x64",
+            "miktex/bin",
+            "bin/x64",
+            "bin",
+        ]
+        for base in known:
+            for rel in miktex_rel:
+                candidates.append(Path(base) / rel / f"{name}.exe")
 
+        # TeX Live 常见位置（texlive/<年>/bin/windows）
+        texlive_root = Path(prog) / "texlive" if prog else None
+        if texlive_root and texlive_root.is_dir():
+            for year_dir in texlive_root.iterdir():
+                if year_dir.is_dir() and (year_dir / "bin" / "windows").is_dir():
+                    candidates.append((year_dir / "bin" / "windows") / f"{name}.exe")
+
+    for cand in candidates:
+        if cand.is_file():
+            return str(cand)
+
+    # ③ 找不到：提示如何定位已装的发行版，而不是诱导去下载/安装。
     raise FileNotFoundError(
-        f"Cannot locate {name}. Install MiKTeX/TeX Live or pass an explicit path."
+        f"找不到 {name}。请先确认本机已安装 MiKTeX/TeX Live，并把该发行版的 bin 目录加入 PATH，"
+        f"或把 {name}.exe 的完整路径通过 --xelatex/--pdftocairo 传入。"
+        f"不要擅自下载或安装新的 TeX 发行版；工作流默认复用本机已有的 MiKTeX/TeX Live。"
     )
 
 

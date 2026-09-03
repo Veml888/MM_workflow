@@ -1,6 +1,6 @@
 ---
 name: mm-orchestrator
-description: 全国大学生数学建模竞赛（CUMCM 2026）全流程编排入口。当用户要开始国赛建模、说"开始建模"、"做这道国赛题"、"跑完整流程"、"写数模论文"，或需要按阶段调度赛题分析、建模求解、编程实现、图表生成、流程与示意图绘制、论文撰写时使用。本 skill 负责询问关键偏好、生成 plan.md、todo.md、project-manifest.json 与论文结构规划/图需求，并调度下游阶段 skill。
+description: 全国大学生数学建模竞赛（CUMCM）全流程编排入口。当用户要开始国赛建模、说"开始建模"、"做这道国赛题"、"跑完整流程"、"写数模论文"，或需要按阶段调度赛题分析、建模求解、编程实现、图表生成、流程与示意图绘制、论文撰写时使用。本 skill 负责询问关键偏好、生成 plan.md、todo.md、project-manifest.json 与论文结构规划/图需求，并调度下游阶段 skill。
 ---
 
 <!-- READ-PREAMBLE:v1 -->
@@ -14,9 +14,9 @@ description: 全国大学生数学建模竞赛（CUMCM 2026）全流程编排入
 
 # 数学建模全流程编排
 
-本 skill 是 CUMCM 2026 数模 skills 的总控入口，不替代任何阶段 skill。它只做三件事：**问清偏好 → 建立计划与交接清单 → 调度各阶段 skill**。
+本 skill 是 CUMCM 数模 skills 的总控入口，不替代任何阶段 skill。它只做三件事：**问清偏好 → 建立计划与交接清单 → 调度各阶段 skill**。
 
-跨阶段不变量遵循 `references/cumcm-2026-shared-policy.md`；阶段专属细则以负责产物的 owner skill 及其直接引用的 references 为准。机器可读交接遵循 `references/project-manifest-contract.md` 和 `project-manifest.schema.json`。开始前完整读取这三份文件和 `references/project-layout.md`。
+跨阶段不变量遵循 `references/cumcm-shared-policy.md`；阶段专属细则以负责产物的 owner skill 及其直接引用的 references 为准。机器可读交接遵循 `references/project-manifest-contract.md` 和 `project-manifest.schema.json`。开始前完整读取这三份文件和 `references/project-layout.md`。
 
 ## 工作流
 

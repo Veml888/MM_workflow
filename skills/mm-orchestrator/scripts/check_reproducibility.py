@@ -13,6 +13,13 @@ import argparse
 import hashlib
 import json
 import sys
+
+# --- UTF-8 输出保护（防乱码）---
+if hasattr(sys, "stdout") and hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys, "stderr") and hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+# --- /UTF-8 输出保护 ---
 from pathlib import Path
 
 
@@ -22,7 +29,8 @@ REQUIRED_SCRIPT = {"name", "sha256", "command", "inputs", "outputs", "exit_code"
 
 
 def _ascii(value: object) -> str:
-    return str(value).encode("ascii", "backslashreplace").decode("ascii")
+    # 保留可打印的中文/符号，仅对不可打印/控制字符转义（配合 UTF-8 输出保护，避免报错信息变成 \uXXXX）
+    return "".join(ch if ch.isprintable() else ("\\u%04x" % ord(ch)) for ch in str(value))
 
 
 def sha256(path: Path) -> str:

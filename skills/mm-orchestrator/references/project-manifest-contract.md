@@ -7,7 +7,7 @@
 ```json
 {
   "schema_version": "2.0",
-  "competition": "CUMCM-2026",
+  "competition": "CUMCM",
   "project": {"title": "", "language": "zh-CN"},
   "stages": {
     "analysis": {"status": "pending", "report": "docs/01-analysis-report.md"},

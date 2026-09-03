@@ -29,6 +29,7 @@
     "SKILL.md",
     "references/workflow-and-gates.md",
     "references/common-paper-rules.md",
+    "references/篇幅控制-playbook.md",
     "references/chapters/00-摘要.md",
     "references/chapters/01-问题重述.md",
     "references/chapters/02-问题分析.md",
@@ -42,7 +43,7 @@
     "references/layout-and-compilation.md",
     "references/language-and-storyline.md",
     "references/second-pass-review.md",
-    "../mm-orchestrator/references/cumcm-2026-shared-policy.md",
+    "../mm-orchestrator/references/cumcm-shared-policy.md",
     "../mm-orchestrator/references/project-manifest-contract.md"
   ],
   "reread_before_writing": {

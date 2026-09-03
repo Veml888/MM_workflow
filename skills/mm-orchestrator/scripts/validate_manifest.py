@@ -6,6 +6,13 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+
+# --- UTF-8 输出保护（防乱码）---
+if hasattr(sys, "stdout") and hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys, "stderr") and hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+# --- /UTF-8 输出保护 ---
 from pathlib import Path
 
 
@@ -30,8 +37,9 @@ def validate(manifest: dict) -> list[str]:
     errors: list[str] = []
     if manifest.get("schema_version") != "2.0":
         fail(errors, "schema_version must be '2.0'")
-    if manifest.get("competition") != "CUMCM-2026":
-        fail(errors, "competition must be 'CUMCM-2026'")
+    comp = manifest.get("competition")
+    if not (isinstance(comp, str) and comp.upper().startswith("CUMCM")):
+        fail(errors, "competition must be a CUMCM value (e.g. 'CUMCM' or 'CUMCM-<year>')")
     if not isinstance(manifest.get("project"), dict):
         fail(errors, "project must be an object")
 

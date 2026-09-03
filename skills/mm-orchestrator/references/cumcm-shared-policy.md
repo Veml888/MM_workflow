@@ -1,10 +1,10 @@
-# CUMCM 2026 跨阶段不变量
+# CUMCM 跨阶段不变量
 
 本文件只保存整套 `mm-*` skills 必须共同遵守、且不能在阶段之间发生漂移的原则。阶段专属的写作、排版、建模、编程、图件、验收和交付细节，以负责该产物的 owner skill 及其直接引用的 references 为准；不得把本文件扩展成各阶段操作手册。
 
 ## 适用范围与规则所有权
 
-- 流水线只服务全国大学生数学建模竞赛 CUMCM 2026，不自动兼容其他竞赛或年份。
+- 流水线服务全国大学生数学建模竞赛（CUMCM）全流程，适配历年任意赛题；不绑定具体年份，不自动兼容其他竞赛。
 - `mm-problem-analysis`、`mm-modeling`、`mm-coding`、`mm-figures`、`mm-graphics`、`mm-paper-writing`、`mm-verification` 分别拥有本阶段产物的具体规则；`mm-orchestrator` 只负责调度和跨阶段回写。
 - 交接字段、稳定 ID、阶段状态、哈希、版本、返工和 `change_log` 统一遵循 `project-manifest-contract.md`，不得在本文件重复定义。
 
