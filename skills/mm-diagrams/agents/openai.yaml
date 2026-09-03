@@ -1,4 +1,0 @@
-interface:
-  display_name: "数学建模论文流程图"
-  short_description: "用 TikZ 生成 CUMCM 论文级中文流程与结构图"
-  default_prompt: "使用 $mm-diagrams 按插图需求清单绘制克制、严谨的 CUMCM 论文图，交付 TikZ、矢量 PDF 和 600 DPI PNG，并完成边界锚点、物理字号与连线视觉审查。"

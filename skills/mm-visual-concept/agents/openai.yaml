@@ -1,4 +1,0 @@
-interface:
-  display_name: "数模纯视觉示意图"
-  short_description: "为 CUMCM 论文强制配置至少一张高质量视觉示意图"
-  default_prompt: "使用 $mm-visual-concept 按论文结构草稿和插图需求清单制作至少一张事实准确、视觉效果出色的示意图；色彩与风格按题目自由选择，并登记正文锚点与 manifest。"

@@ -12,8 +12,8 @@ from pathlib import Path
 ORDINARY_STATUSES = {"pending", "in_progress", "complete", "failed", "n_a"}
 VERIFICATION_STATUSES = ORDINARY_STATUSES | {"conditional"}
 STAGE_NAMES = {
-    "analysis", "modeling", "coding", "figures", "diagrams", "visual",
-    "paper_draft", "paper_final", "verification",
+    "analysis", "modeling", "coding", "figures", "graphics",
+    "paper_plan", "paper_final", "verification",
 }
 ID_ARRAYS = {
     "requirements", "problems", "datasets", "assumptions", "model_candidates",
@@ -52,6 +52,42 @@ def validate(manifest: dict) -> list[str]:
             allowed = VERIFICATION_STATUSES if name == "verification" else ORDINARY_STATUSES
             if status not in allowed:
                 fail(errors, f"stages.{name}.status '{status}' is invalid")
+
+        paper_plan = stages.get("paper_plan")
+        if isinstance(paper_plan, dict) and paper_plan.get("status") == "complete":
+            for field in (
+                "report", "gates", "page_budget", "draft_audit",
+                "draft_metrics", "planned_body_pages",
+            ):
+                if paper_plan.get(field) in (None, ""):
+                    fail(errors, f"stages.paper_plan.{field} is required when complete")
+            if paper_plan.get("planned_body_pages") not in {28, 29}:
+                fail(errors, "stages.paper_plan.planned_body_pages must be 28 or 29")
+
+        paper_final = stages.get("paper_final")
+        if isinstance(paper_final, dict):
+            draft_mode = paper_final.get("draft_mode")
+            if draft_mode not in {"retained", "partial", "invalidated", "none"}:
+                fail(errors, "stages.paper_final.draft_mode is invalid")
+            if draft_mode in {"retained", "partial", "invalidated"}:
+                for field in ("draft_path", "draft_sha256", "draft_body_pages"):
+                    if paper_final.get(field) in (None, ""):
+                        fail(errors, f"stages.paper_final.{field} is required for draft_mode={draft_mode}")
+            if paper_final.get("status") == "complete":
+                for field in (
+                    "planned_body_pages", "final_body_pages", "length_audit",
+                    "content_gap_report", "compile_passes",
+                ):
+                    if paper_final.get(field) in (None, ""):
+                        fail(errors, f"stages.paper_final.{field} is required when complete")
+                if paper_final.get("planned_body_pages") not in {28, 29}:
+                    fail(errors, "stages.paper_final.planned_body_pages must be 28 or 29")
+                final_pages = paper_final.get("final_body_pages")
+                if not isinstance(final_pages, int) or not 27 <= final_pages <= 30:
+                    fail(errors, "stages.paper_final.final_body_pages must be an integer in [27, 30]")
+                passes = paper_final.get("compile_passes")
+                if not isinstance(passes, int) or passes < 2:
+                    fail(errors, "stages.paper_final.compile_passes must be >= 2")
 
     seen_ids: dict[str, str] = {}
     for field in ID_ARRAYS:

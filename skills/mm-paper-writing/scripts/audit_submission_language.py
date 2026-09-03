@@ -44,6 +44,10 @@ def source_without_exemptions(text: str) -> str:
     )
     # TeX comments are not visible submission text. Preserve escaped percent signs.
     text = re.sub(r"(?<!\\)%[^\n]*", "", text)
+    # 文件名/命令名（\texttt、\url、\lstinline）不是作者正文，按"禁用表达不适用于文件名/文献题名"剔除。
+    text = re.sub(r"\\texttt\{[^{}]*\}", "", text)
+    text = re.sub(r"\\url\{[^{}]*\}", "", text)
+    text = re.sub(r"\\lstinline\{[^{}]*\}", "", text)
     return text
 
 

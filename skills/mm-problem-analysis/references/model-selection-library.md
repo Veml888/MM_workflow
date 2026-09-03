@@ -2,7 +2,7 @@
 
 > 定位：判型是"诊断"，本库是"处方"。`problem-taxonomy.md` 回答"这是什么类型的问题"，本库回答"这类问题历史上用什么模型、在什么条件下能用、容易怎么翻车"。
 >
-> 与 `mm-modeling` 的边界：本库只给出**方向、适用条件与翻车点**（分析阶段用）；具体公式、参数、伪代码由 `mm-modeling` 的 `algorithm-catalog.md` 与 `pseudocode-guide.md` 承接；数值实现归 `mm-coding`。
+> 与 `mm-modeling` 的边界：本库只给出**方向、适用条件与翻车点**（分析阶段用）；具体公式、参数、伪代码由 `mm-modeling` 的 `algorithm-catalog.md` 与其 SKILL.md 的"伪代码写法"节承接；数值实现归 `mm-coding`。
 
 ## 0. 使用说明
 
