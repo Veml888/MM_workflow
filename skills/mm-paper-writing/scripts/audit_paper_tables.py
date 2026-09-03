@@ -141,16 +141,18 @@ def check(tex, path):
         if r'\begin{table}' in block or r'\begin{figure}' in block:
             errs.append('T-3 符号说明的 longtable 不应包裹在 table/figure 浮动环境中')
             ok = False
-        lt = re.search(r'\\begin\{longtable\}\{([^}]*)\}(.*?)\\end\{longtable\}', block, re.S)
+        lt = re.search(r'\\begin\{longtable\}\{', block, re.S)
         if lt:
-            spec = lt.group(1)
-            ncols = 0
-            stripped = re.sub(r'C\{[^}]*\}|p\{[^}]*\}|X|@\{\}|>.*?\{[^}]*\}', '', spec)
+            spec = extract_col_spec(block, lt.end() - 1)
             ncols = len(re.findall(r'[clrCpX]', spec))  # 近似列数
             if ncols < 3:
                 errs.append('T-3 符号说明应至少三列（符号|含义|单位）')
                 ok = False
-            body = lt.group(2)
+            # 提取 body（列定义之后到 \end{longtable}）
+            brace_pos = lt.end() - 1
+            body_start = brace_pos + 1 + len(spec) + 1
+            end_lt = block.find(r'\end{longtable}', body_start)
+            body = block[body_start:end_lt] if end_lt >= 0 else ""
             if not (r'\endfirsthead' in body and r'\endhead' in body):
                 errs.append('T-3 longtable 缺少 \\endfirsthead / \\endhead（跨页续表头）')
                 ok = False
