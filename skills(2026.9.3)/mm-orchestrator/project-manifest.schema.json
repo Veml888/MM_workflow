@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cumcm.local/cumcm/project-manifest-2.0.schema.json",
+  "title": "CUMCM project manifest",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version", "competition", "project", "stages", "requirements",
+    "problems", "datasets", "assumptions", "model_candidates", "selected_models",
+    "implemented_models", "validation_plans", "symbols", "results", "figures",
+    "artifacts", "paper_gates", "rework", "change_log"
+  ],
+  "properties": {
+    "schema_version": {"const": "2.0"},
+    "competition": {"type": "string", "pattern": "^CUMCM"},
+
+    "project": {
+      "type": "object",
+      "required": ["title", "language"],
+      "properties": {"title": {"type": "string"}, "language": {"type": "string"}},
+      "additionalProperties": true
+    },
+    "stages": {
+      "type": "object",
+      "required": ["analysis", "modeling", "coding", "figures", "graphics", "paper_plan", "paper_final", "verification"],
+      "properties": {
+        "analysis": {"$ref": "#/$defs/ordinaryStage"},
+        "modeling": {"$ref": "#/$defs/ordinaryStage"},
+        "coding": {"$ref": "#/$defs/ordinaryStage"},
+        "figures": {"$ref": "#/$defs/ordinaryStage"},
+        "graphics": {"$ref": "#/$defs/ordinaryStage"},
+        "paper_plan": {"$ref": "#/$defs/paperPlanStage"},
+        "paper_final": {"$ref": "#/$defs/paperFinalStage"},
+        "verification": {"$ref": "#/$defs/verificationStage"}
+      },
+      "additionalProperties": true
+    },
+    "requirements": {"$ref": "#/$defs/idArray"},
+    "problems": {"$ref": "#/$defs/idArray"},
+    "datasets": {"$ref": "#/$defs/idArray"},
+    "assumptions": {"$ref": "#/$defs/idArray"},
+    "model_candidates": {"$ref": "#/$defs/idArray"},
+    "selected_models": {"$ref": "#/$defs/idArray"},
+    "implemented_models": {"$ref": "#/$defs/idArray"},
+    "validation_plans": {"$ref": "#/$defs/idArray"},
+    "symbols": {"$ref": "#/$defs/idArray"},
+    "results": {"$ref": "#/$defs/idArray"},
+    "figures": {"$ref": "#/$defs/idArray"},
+    "artifacts": {"type": "array", "items": {"type": "object", "required": ["path", "producer_stage", "version"]}},
+    "paper_gates": {"type": "array", "items": {"type": "object", "required": ["id", "gate", "status", "evidence_path"], "properties": {"id": {"type": "string"}, "gate": {"enum": ["G-1", "G-2", "G-3", "G-4", "G-5"]}, "status": {"enum": ["pending", "pass", "fail"]}, "evidence_path": {"type": "string"}}, "additionalProperties": true}},
+    "rework": {"type": "array", "items": {"type": "object", "required": ["id", "source", "target_stage", "affected_stages", "issue", "severity", "status"], "properties": {"id": {"type": "string"}, "source": {"type": "string"}, "target_stage": {"type": "string"}, "affected_stages": {"type": "array", "items": {"type": "string"}}, "issue": {"type": "string"}, "severity": {"enum": ["critical", "major", "minor"]}, "status": {"enum": ["open", "resolved", "superseded"]}}, "additionalProperties": true}},
+    "change_log": {"type": "array", "items": {"type": "object"}}
+  },
+  "$defs": {
+    "ordinaryStage": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {"status": {"enum": ["pending", "in_progress", "complete", "failed", "n_a"]}},
+      "additionalProperties": true
+    },
+    "paperPlanStage": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["pending", "in_progress", "complete", "failed", "n_a"]},
+        "report": {"type": "string", "minLength": 1},
+        "gates": {"type": "string", "minLength": 1},
+        "page_budget": {"type": "string", "minLength": 1},
+        "draft_audit": {"type": "string", "minLength": 1},
+        "draft_metrics": {"type": "string", "minLength": 1},
+        "planned_body_pages": {"enum": [28, 29]}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "complete"}}, "required": ["status"]},
+          "then": {"required": ["report", "gates", "page_budget", "draft_audit", "draft_metrics", "planned_body_pages"]}
+        }
+      ],
+      "additionalProperties": true
+    },
+    "paperFinalStage": {
+      "type": "object",
+      "required": ["status", "draft_mode"],
+      "properties": {
+        "status": {"enum": ["pending", "in_progress", "complete", "failed", "n_a"]},
+        "draft_mode": {"enum": ["retained", "partial", "invalidated", "none"]},
+        "draft_path": {"type": ["string", "null"]},
+        "draft_sha256": {"type": ["string", "null"]},
+        "draft_body_pages": {"type": ["integer", "null"], "minimum": 0},
+        "planned_body_pages": {"enum": [28, 29]},
+        "final_body_pages": {"type": "integer", "minimum": 27, "maximum": 30},
+        "length_audit": {"type": "string", "minLength": 1},
+        "content_gap_report": {"type": "string", "minLength": 1},
+        "compile_passes": {"type": "integer", "minimum": 0},
+        "full_skill_passes": {"type": "integer", "enum": [0, 1, 2]},
+        "first_read_receipt": {"type": "string", "minLength": 1},
+        "second_read_receipt": {"type": "string", "minLength": 1},
+        "first_pass_audit": {"type": "string", "minLength": 1},
+        "second_pass_audit": {"type": "string", "minLength": 1}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "complete"}}, "required": ["status"]},
+          "then": {
+            "required": ["planned_body_pages", "final_body_pages", "length_audit", "content_gap_report", "compile_passes", "full_skill_passes", "first_read_receipt", "second_read_receipt", "first_pass_audit", "second_pass_audit"],
+            "properties": {
+              "compile_passes": {"minimum": 4},
+              "full_skill_passes": {"const": 2}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"draft_mode": {"enum": ["retained", "partial", "invalidated"]}}, "required": ["draft_mode"]},
+          "then": {"required": ["draft_path", "draft_sha256", "draft_body_pages"]}
+        }
+      ],
+      "additionalProperties": true
+    },
+    "verificationStage": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {"status": {"enum": ["pending", "in_progress", "complete", "failed", "conditional", "n_a"]}},
+      "additionalProperties": true
+    },
+    "idArray": {
+      "type": "array",
+      "items": {"type": "object", "required": ["id"], "properties": {"id": {"type": "string", "minLength": 1}}, "additionalProperties": true}
+    }
+  }
+}
