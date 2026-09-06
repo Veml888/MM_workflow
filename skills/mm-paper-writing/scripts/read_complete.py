@@ -56,13 +56,14 @@ def load_registry() -> dict:
         "references/chapters/03-模型假设.md",
         "references/chapters/04-符号说明.md",
         "references/chapters/05-模型的建立与求解.md",
+        "references/chapters/05b-灵敏度分析与模型检验.md",
         "references/chapters/06-模型评价与推广.md",
         "references/chapters/07-AI使用声明.md",
         "references/chapters/08-参考文献.md",
         "references/chapters/09-附录.md",
     ]
     if paper_order != expected_chapters:
-        raise ValueError("paper_order must match the fixed ten-part paper order")
+        raise ValueError("paper_order must match the fixed eleven-part paper order")
     if not isinstance(writing_order, list) or sorted(writing_order) != sorted(expected_chapters):
         raise ValueError("writing_order must contain each fixed chapter exactly once")
     if writing_order[-1] != "references/chapters/00-摘要.md":

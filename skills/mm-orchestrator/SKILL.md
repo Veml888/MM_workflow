@@ -54,8 +54,8 @@ description: 全国大学生数学建模竞赛（CUMCM）全流程编排入口�
 | 4 | 论文策划定稿（初稿审计 + 结构规划 + 页面预算 + 图件骨架） | `mm-orchestrator` | `paper/draft-audit.md`、`paper/draft-metrics.json`、`paper/structure-plan.md`、`paper/page-budget.json`、`paper/figure-requirements.md`、`paper/writing-gates.md` |
 | 5a | 数据图（按需） | `mm-figures` | `figures/*.png/pdf/svg`、`docs/04-figures-report.md` |
 | 5b | 非数据图（逻辑/框架/机理图 + 场景/空间精确示意图，按题需要） | `mm-graphics` | `figures/*.tex|pdf|png`、`docs/05-diagrams-report.md` |
-| 6a | 论文终稿第一轮（完整成稿） | `mm-paper-writing` | `paper/论文.tex`、`paper/论文.pdf`、`paper/skill-read-receipt-pass-1.json`、`paper/pass-1-audit.md` |
-| 6b | 论文终稿第二轮（重新完整读全部模块后独立终审） | `mm-paper-writing` | 修订后的 `paper/论文.tex`、`paper/论文.pdf`、`paper/skill-read-receipt-pass-2.json`、`paper/pass-2-audit.md` |
+| 6a | 论文终稿写作轮（唯一一次完整调用成稿） | `mm-paper-writing` | `paper/论文.tex`、`paper/论文.pdf`、`paper/skill-read-receipt.json`、`paper/writing-audit.md` |
+| 6b | 论文终稿独立审查轮（终审与修订） | `mm-paper-writing` | `paper/review-findings.md`、`paper/review-audit.md`、修订后的 `paper/论文.tex`、`paper/论文.pdf` |
 | 7 | 验收 | `mm-verification` | `docs/06-verification-report.md` |
 
 ### 论文策划（编排器本步直接产出，不调用其它 skill）
@@ -68,7 +68,7 @@ description: 全国大学生数学建模竞赛（CUMCM）全流程编排入口�
 - `paper/draft-metrics.json`：记录初稿模式、路径、SHA256、总页数/正文页数、各章起始页和可编译状态；没有初稿时仍生成并写明 `mode=none`。
 
 - `paper/structure-plan.md`（内容，由编排器建）：章节骨架 + 逐问论证链 + 预计篇幅。**章节骨架以 `mm-paper-writing/references/common-paper-rules.md` 的"整体论文骨架"与 `references/writing-order.json` 的章节清单为唯一权威**（每问独立成章、模型评价与推广单独一章这类结构编排不在此重复）；每问写清核心论证链（承接 → 建模 → 求解 → 结果表 → 结果分析）与预计篇幅，并建立"题面要求/子问题 → 正文小节 → 模型变量与约束 → 结果证据 → 最终回答"的追踪关系（供 `mm-verification` 逐项验收）。
-- `paper/page-budget.json`（机器可读预算）：`target_body_pages` 只能为 28 或 29，`allowed_range` 固定 `[27,30]`；每章记录 `min_pages/target_pages/max_pages`、真实 `source_paths` 与 `evidence_ids`，各章目标页数之和必须等于总目标。预算按问题难度和证据量分配，不平均分配、不以空泛内容补页。**注：目标页数取 28/29 是为给分页波动留余量；实际正文允许到 30 页，`check_paper_length` 以 `allowed_range` 兜底，不因低于 30 而判过预算缺陷**。
+- `paper/page-budget.json`（机器可读预算）：`target_body_pages` 只能为 28 或 29，`allowed_range` 固定 `[25,30]`；每章记录 `min_pages/target_pages/max_pages`、真实 `source_paths` 与 `evidence_ids`，各章目标页数之和必须等于总目标。预算按问题难度和证据量分配，不平均分配、不以空泛内容补页。**注：目标页数取 28/29 是为给分页波动留余量；实际正文允许到 30 页，`check_paper_length` 以 `allowed_range` 兜底，不因低于 30 而判过预算缺陷**。
 
 正式预算使用以下内联结构（初始化时可为空，定稿时不得保留占位符）：
 
@@ -76,7 +76,7 @@ description: 全国大学生数学建模竞赛（CUMCM）全流程编排入口�
 {
   "schema_version": "1.0",
   "target_body_pages": 28,
-  "allowed_range": [27, 30],
+  "allowed_range": [25, 30],
   "draft": {"mode": "none"},
   "sections": [
     {
@@ -84,12 +84,16 @@ description: 全国大学生数学建模竞赛（CUMCM）全流程编排入口�
       "source_paths": ["docs/01-analysis-report.md", "docs/02-modeling-report.md"], "evidence_ids": ["P-01", "SYM-001"]
     },
     {
-      "id": "SEC-P01", "title": "问题一模型建立与求解", "min_pages": 8, "target_pages": 10, "max_pages": 11,
+      "id": "SEC-P01", "title": "问题一模型建立与求解", "min_pages": 8, "target_pages": 9, "max_pages": 10,
       "source_paths": ["docs/02-modeling-report.md", "docs/03-results-report.md"], "evidence_ids": ["P-01", "R-P01-001"]
     },
     {
-      "id": "SEC-P02", "title": "问题二模型建立与求解", "min_pages": 9, "target_pages": 11, "max_pages": 12,
+      "id": "SEC-P02", "title": "问题二模型建立与求解", "min_pages": 8, "target_pages": 10, "max_pages": 11,
       "source_paths": ["docs/02-modeling-report.md", "docs/03-results-report.md"], "evidence_ids": ["P-02", "R-P02-001"]
+    },
+    {
+      "id": "SEC-SENS", "title": "灵敏度分析与模型检验", "min_pages": 1, "target_pages": 2, "max_pages": 3,
+      "source_paths": ["docs/02-modeling-report.md", "docs/03-results-report.md"], "evidence_ids": ["R-P01-001", "R-P02-001"]
     },
     {
       "id": "SEC-CLOSE", "title": "评价与收尾", "min_pages": 2, "target_pages": 3, "max_pages": 4,
@@ -112,16 +116,16 @@ description: 全国大学生数学建模竞赛（CUMCM）全流程编排入口�
 ### 第 4 步：按序调用阶段 skill
 
 - 先完成分析、建模和编程，再正式完成初稿审计、结构计划、页面预算与图件骨架；`validate_paper_plan.py` 必须 exit 0 且 `paper_plan.status=complete`。随后 `mm-figures` 与 `mm-graphics` 两个分支按适用性并行调用，全部完成或标记 `n_a` 后再进入论文终稿。
-- 论文终稿阶段固定连续调用 `mm-paper-writing` 两次。每次调用都先运行该 skill 的 `scripts/read_complete.py plan`，再按计划逐块读取 `references/writing-order.json` 登记的全部必读文件；每块必须出现 `READ-END`，并以本轮独立读取回执通过 `read_complete.py verify` 为准。第二次不得复用第一次回执、上下文或“已读”结论。
-- 第一次调用结束后生成 `paper/skill-read-receipt-pass-1.json` 与 `paper/pass-1-audit.md`，把 `paper_final.full_skill_passes` 记为 `1`，但 `paper_final.status` 保持 `in_progress`。随后立即进行第二次独立调用，以第一次终稿为审查和修订对象，重新运行双遍编译及全部专项机检，生成第二轮回执与审计。
-- 两轮审计都必须覆盖注册表中的每个必读文件及其全部二/三级标题，并通过 `validate_requirement_coverage.py`。只有第二次无阻断项、`paper_final.full_skill_passes=2`、两轮回执和审计路径均已登记哈希时，才能把 `paper_final.status` 置为 `complete` 并进入 `mm-verification`；否则继续留在论文终稿阶段。
+- 论文终稿阶段分两步。**写作轮（唯一一次完整调用）**：先运行该 skill 的 `scripts/read_complete.py plan`，再按计划逐块读取 `references/writing-order.json` 登记的全部必读文件；每块必须出现 `READ-END`，并以读取回执通过 `read_complete.py verify` 为准。读取完整性由回执硬门禁保证，独立审查轮不重新完整读取。
+- 写作轮结束后生成 `paper/skill-read-receipt.json` 与 `paper/writing-audit.md`，`paper_final.status` 保持 `in_progress`。随后进行**独立审查轮**（优先由未参与写作的独立会话或子代理执行）：以写作轮终稿为审查和修订对象，就地重读本轮实际修订章节对应的模块，对照 `docs/01~03` 与 `results/` 逐问核对并跑全套专项机检，生成 `paper/review-findings.md` 与 `paper/review-audit.md`；有修订则重编译双遍并重跑全部机检。
+- 审查审计必须覆盖注册表中的每个必读文件及其全部二/三级标题，并通过 `validate_requirement_coverage.py`。只有审查轮无阻断项、`read_receipt`、`writing_audit`、`review_findings`、`review_audit` 均已登记哈希时，才能把 `paper_final.status` 置为 `complete` 并进入 `mm-verification`；否则继续留在论文终稿阶段。
 - 每个阶段开始前，回显：当前阶段、负责 skill、将读取的上游报告、将产出的文件。
 - 每个阶段开始前输出 GATE 确认：上游产物存在、必读规范已读（引用原文）、计划产出明确；缺上游先补齐再进下一阶段。
 - 每阶段结束后更新 `project-manifest.json` 中自己负责的阶段状态、产物哈希和版本。发生回写时追加 `change_log`，记录原因和受影响 ID。
 - 若某一阶段被跳过或不适用，在 `plan.md` 中注明原因，并将 manifest 对应阶段标记为 `n_a`；范围化验收不要求 `n_a` 阶段产物，但最终总结必须说明范围。
 - 阶段产物未通过 `mm-verification` 前，不得声称"全流程完成"。
 - `mm-verification` 只审计、定位并指定回写阶段；本 skill 负责调用对应 skill 修复后再次验收。
-- 每个阶段完成前运行 `<mm-orchestrator目录>/scripts/validate_manifest.py` 及该阶段的**机检脚本**：analysis 用 `check_analysis_report.py`（在 `<mm-problem-analysis目录>/scripts/`），**modeling 用 `模型字典复核`（见 `mm-modeling` SKILL Step 3.6，每个子问题的推荐模型须调用 `<mm-model-dictionary目录>/scripts/query_model_dictionary.py` 核查，结果为 `合适/有条件合适/不合适/证据不足待复核` 之一；`不合适` 须回退重选）**，paper_plan 用 `validate_paper_plan.py`，coding 用 `check_reproducibility.py`，figures 用 `check_figure_overlap.py`，graphics 用 `render_tikz.py`/`audit_svg.py`/`render_svg.py`；**paper_final 的两次独立调用都跑全套论文机检**：`check_paper_length`、`check_line_spacing`、`check_noindent`、`check_quotes`、`check_abstract_symbols`、`audit_paper_tables`、`audit_submission_language`、`audit_abstract_page`、`check_paper_cites`、`check_paper_refs`、`check_layout`（共 11 项，全部要 exit 0）。**PASS 一律以脚本 exit 0 为准，禁止手写 PASS**。任一脚本 FAIL 不得继续下游，先返回该阶段修正；验收发现的问题写入 `rework[]`，按影响范围重新调用目标阶段及下游阶段。
+- 每个阶段完成前运行 `<mm-orchestrator目录>/scripts/validate_manifest.py` 及该阶段的**机检脚本**：analysis 用 `check_analysis_report.py`（在 `<mm-problem-analysis目录>/scripts/`），**modeling 用 `模型字典复核`（见 `mm-modeling` SKILL Step 3.6，每个子问题的推荐模型须调用 `<mm-model-dictionary目录>/scripts/query_model_dictionary.py` 核查，结果为 `合适/有条件合适/不合适/证据不足待复核` 之一；`不合适` 须回退重选）**，paper_plan 用 `validate_paper_plan.py`，coding 用 `check_reproducibility.py`，figures 用 `check_figure_overlap.py`，graphics 用 `render_tikz.py`/`audit_svg.py`/`render_svg.py`；**paper_final 的写作轮与独立审查轮（含修订后复跑）都跑全套论文机检**：`check_paper_length`、`check_line_spacing`、`check_noindent`、`check_quotes`、`check_abstract_symbols`、`audit_paper_tables`、`audit_submission_language`、`audit_abstract_page`、`check_paper_cites`、`check_paper_refs`、`check_layout`（共 11 项，全部要 exit 0）。**PASS 一律以脚本 exit 0 为准，禁止手写 PASS**。任一脚本 FAIL 不得继续下游，先返回该阶段修正；验收发现的问题写入 `rework[]`，按影响范围重新调用目标阶段及下游阶段。
 
 ## 边界
 

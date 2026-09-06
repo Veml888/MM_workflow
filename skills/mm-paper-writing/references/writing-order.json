@@ -7,6 +7,7 @@
     "references/chapters/03-模型假设.md",
     "references/chapters/04-符号说明.md",
     "references/chapters/05-模型的建立与求解.md",
+    "references/chapters/05b-灵敏度分析与模型检验.md",
     "references/chapters/06-模型评价与推广.md",
     "references/chapters/07-AI使用声明.md",
     "references/chapters/08-参考文献.md",
@@ -18,6 +19,7 @@
     "references/chapters/03-模型假设.md",
     "references/chapters/04-符号说明.md",
     "references/chapters/05-模型的建立与求解.md",
+    "references/chapters/05b-灵敏度分析与模型检验.md",
     "references/chapters/06-模型评价与推广.md",
     "references/chapters/07-AI使用声明.md",
     "references/chapters/08-参考文献.md",
@@ -36,6 +38,7 @@
     "references/chapters/03-模型假设.md",
     "references/chapters/04-符号说明.md",
     "references/chapters/05-模型的建立与求解.md",
+    "references/chapters/05b-灵敏度分析与模型检验.md",
     "references/chapters/06-模型评价与推广.md",
     "references/chapters/07-AI使用声明.md",
     "references/chapters/08-参考文献.md",
@@ -46,6 +49,7 @@
     "../mm-orchestrator/references/project-manifest-contract.md"
   ],
   "reread_before_writing": {
+    "灵敏度分析与模型检验": "references/chapters/05b-灵敏度分析与模型检验.md",
     "摘要": "references/chapters/00-摘要.md",
     "问题重述": "references/chapters/01-问题重述.md",
     "问题分析": "references/chapters/02-问题分析.md",

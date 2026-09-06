@@ -90,8 +90,16 @@ def check(root: Path, tex_path: Path) -> tuple[list[str], list[str]]:
             errors.append(f"caption uses question-number wording: {caption}")
 
     # every figure/table label must be referenced by at least one \ref (no orphan)
+    # 豁免：符号说明章内的表格 label——该表为索引性表格，按规范不配说明段落/引导句、不要求正文引用
+    # （定位方式与 audit_paper_tables 的 T-3 一致：\section{符号说明} 到下一 \section 之间的块）
+    sym_block = re.search(r"\\section\{符号说明\}(.*?)(?=\\section\{|\Z)", text, re.S)
+    sym_labels: set[str] = set()
+    if sym_block:
+        sym_labels = {f"tab:{m.group(1)}" for m in re.finditer(r"\\label\{tab:([^}]+)\}", sym_block.group(1))}
     for m in re.finditer(r"\\label\{(fig|tab):([^}]+)\}", text):
         key = f"{m.group(1)}:{m.group(2)}"
+        if key in sym_labels:
+            continue
         if not re.search(r"\\ref\{" + re.escape(key) + r"\}", text):
             errors.append(f"figure/table '{key}' has a \\label but is never \\ref'd in text (orphan)")
 

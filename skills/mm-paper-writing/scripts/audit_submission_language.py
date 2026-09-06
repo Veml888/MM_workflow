@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""Reject process-oriented and empty-template language from paper TeX sources."""
+"""Reject process-oriented and empty-template language from paper TeX sources.
+
+Also enforces paragraph/sentence length limits (成块长文与长难句硬门禁):
+  FAIL  段落 > 320 汉字，或句号/分号/冒号之间的单句 > 120 汉字
+  WARN  段落 250~320 汉字，或单句 80~120 汉字（人工复核；①②③分条段可放行）
+扫描前剥离公式、表格、图片、命令与源码，只测叙述文字；阈值依据见
+language-and-storyline.md「段落与句长硬限制」。
+"""
 
 from __future__ import annotations
 
@@ -65,14 +72,67 @@ def line_number(text: str, position: int) -> int:
     return text.count("\n", 0, position) + 1
 
 
+PARA_FAIL, PARA_WARN = 320, 250
+SENT_FAIL, SENT_WARN = 120, 80
+HAN = re.compile(r"[\u4e00-\u9fff]")
+
+
+def prose_for_density(text: str) -> str:
+    """剥离非叙述内容（公式/表格/图片/命令），只留可供密度测量的叙述文字。"""
+    for env in ("table", "table*", "figure", "figure*", "longtable", "tabular",
+                "tabular*", "equation", "equation*", "align", "align*",
+                "aligned", "gather", "gather*", "cases"):
+        text = re.sub(rf"\\begin\{{{env}\}}.*?\\end\{{{env}\}}", " ", text, flags=re.DOTALL)
+    text = re.sub(r"\$[^$]*\$", " ", text)          # 行内公式
+    text = re.sub(r"\\[a-zA-Z]+\*?(\[[^\]]*\])?", " ", text)  # 其余命令（\ref/\cite/\label/\heiti…）
+    text = re.sub(r"[{}]", "", text)
+    text = re.sub(r"[ \t]+", " ", text)
+    return text
+
+
+def density_findings(tex_file: Path, text: str):
+    """返回 (fails, warns)：段落/句长超限的硬性 FAIL 与人工复核 WARN。
+
+    先在原始文本上按空行分段（行号即真实行号），再对每段单独剥离公式/命令后测量。
+    """
+    fails: list[str] = []
+    warns: list[str] = []
+    for m in re.finditer(r"(?:[^\n]|\n(?!\s*\n))+", text):
+        para_block = m.group(0)
+        if not para_block.strip():
+            continue
+        first_line = line_number(text, m.start())
+        para = prose_for_density(para_block).strip()
+        han = len(HAN.findall(para))
+        if han < 40:
+            continue
+        if han > PARA_FAIL:
+            fails.append(f"{tex_file}:~{first_line}: 段落过长（约{han}汉字 > {PARA_FAIL}）："
+                         f"拆段或转为表/图/公式，成块长文评委不会读")
+        elif han > PARA_WARN:
+            warns.append(f"{tex_file}:~{first_line}: [WARN] 段落偏长（约{han}汉字）："
+                         f"建议拆段或转为表/图/公式")
+        # 句长：句号/分号/冒号都是可读单元的分隔符（分号/冒号分条即合规）
+        for sent in re.split(r"[。！？；：]", para):
+            s_han = len(HAN.findall(sent))
+            if s_han > SENT_FAIL:
+                fails.append(f"{tex_file}:~{first_line}: 句过长（约{s_han}汉字 > {SENT_FAIL}）："
+                             f"断句重写，禁止长难句")
+            elif s_han > SENT_WARN:
+                warns.append(f"{tex_file}:~{first_line}: [WARN] 句偏长（约{s_han}汉字）："
+                             f"以分号或编号分条")
+    return fails, warns
+
+
 def term_pattern(term: str) -> str:
     if re.fullmatch(r"[A-Za-z]+", term):
         return rf"(?<![A-Za-z]){re.escape(term)}(?![A-Za-z])"
     return re.escape(term)
 
 
-def audit(path: Path) -> list[str]:
+def audit(path: Path):
     findings: list[str] = []
+    warns: list[str] = []
     for tex_file in sorted(path.rglob("*.tex")):
         original = tex_file.read_text(encoding="utf-8")
         text = source_without_exemptions(original)
@@ -82,7 +142,10 @@ def audit(path: Path) -> list[str]:
                     findings.append(
                         f"{tex_file}:{line_number(text, match.start())}: {category}: {term}"
                     )
-    return findings
+        f, w = density_findings(tex_file, text)
+        findings.extend(f)
+        warns.extend(w)
+    return findings, warns
 
 
 def main() -> int:
@@ -93,7 +156,9 @@ def main() -> int:
     if not args.paper_dir.is_dir():
         parser.error(f"directory does not exist: {args.paper_dir}")
 
-    findings = audit(args.paper_dir)
+    findings, warns = audit(args.paper_dir)
+    for w in warns:
+        print(w)
     if findings:
         print("submission-language audit failed:")
         print("\n".join(findings))

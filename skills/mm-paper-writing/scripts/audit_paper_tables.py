@@ -3,19 +3,23 @@
 """audit_paper_tables.py — 论文表格/表题专项机检（硬门禁，exit 0 才算 PASS）。
 
 检查项：
-  T-0 中文字体系统：正文宋体、标题黑体；主字体 SimSun、无衬线字体 SimHei；标题层级、图表题、
+  T-0 字体系统：正文宋体、标题黑体；CJK 主字体 SimSun、无衬线字体 SimHei；西文主字体
+      Times New Roman；标题层级、图表题、
       表内文字和源码字号采用固定字体实现。
   T-1 表题/图题标签格式：应为 GB/T 7713 的 "表1 标题"（表号与"表"间无空格、用空格或
       无分隔，禁止冒号）；要求重定义了 \\fnum@table / \\fnum@figure 且 labelsep 用空格。
   T-2 表格列对齐：禁止左对齐 l 或右对齐 r 列，必须居中（c / C{...}）——表头、文字、数字居中。
   T-3 符号说明：只允许一个 longtable（符号|含义|单位），不得"两栏并排/双列分组"，不得包进
       table/floating 浮动环境；longtable 必须具备 \\endfirsthead/\\endhead 续表头。
-  T-4 表格字体：表内须为五号宋体（\\songti\\zihao{5}），禁止相对字号或其它中文字体替代。
-  T-5 三线表：使用 booktabs 的 \\toprule/\\midrule/\\bottomrule。
+  T-4 表格字体：表内中文五号宋体（\\songti\\zihao{5}）、西文/数字五号新罗马（继承主字体）；
+      禁止表内 \\heiti/\\sffamily 等字体切换；\\tabfont 若使用须定义为 \\songti\\zihao{5}。
+  T-5 表格线型：符号说明表必须为三线表（booktabs 三线、无竖线 |）；其余表格线型按
+      内容选择（三线表或全框线表），单表内风格自洽。
   T-5b longtable 跨页续表完整性：必须具备 \\endfirsthead/\\endhead/\\endfoot/\\endlastfoot
       四件套；续页标题必带原表号（\\thetable）；末页底线 \\bottomrule 只允许一条且须在
       \\endlastfoot 内（表末数据行后不得再写第二个 \\bottomrule）。
   T-6 结构：\\end{document} 恰出现一次（防重复）。
+  T-11 灵敏度分析与模型检验章：必设独立一级章节，章内须有扫描/扰动表或表图锚点引用。
 
 用法：python audit_paper_tables.py <论文.tex>
 """
@@ -51,6 +55,10 @@ def check(tex, path):
         (
             re.search(r'\\setCJKsansfont(?:\[[^\]]*\])?\{\s*SimHei\s*\}', tex, re.I),
             'T-0 缺少 \\setCJKsansfont{SimHei}，中文标题字体必须显式设为黑体',
+        ),
+        (
+            re.search(r'\\setmainfont(?:\[[^\]]*\])?\{\s*Times New Roman\s*\}', tex),
+            'T-0 缺少 \\setmainfont{Times New Roman}，西文与数字必须显式设为新罗马',
         ),
         (
             re.search(r'\\songti\s*\\zihao\{-4\}|\\zihao\{-4\}\s*\\songti', tex),
@@ -186,22 +194,42 @@ def check(tex, path):
                         print('  [WARN] T-3 符号 `%s` 只在正文中出现 1 次（疑为"只出现在个别处"的推导中间量/一次性常量）：'
                               '请按"删除后评委是否需回正文"判断，若是中间量请从符号表移除并在正文首次使用处就地说明' % part)
 
-    # ---- T-4 表格字体：五号宋体 ----
-    for m in re.finditer(r'\\begin\{(tabular\*?|longtable)\}', tex):
+    # ---- T-4 表格字体：中文五号宋体、西文五号新罗马（继承主字体，禁表内字体切换） ----
+    tab_font_bad = re.compile(r'\\heiti|\\sffamily|\\kaishu|\\fangsong|\\textsf|\\fontspec')
+    for m in re.finditer(r'\\begin\{(tabular\*?|longtable)\}(.*?)\\end\{(?:tabular\*?|longtable)\}', tex, re.S):
+        line_no = tex[:m.start()].count('\n') + 1
         pre = tex[max(0, m.start() - 300):m.start()]
-        has_size = re.search(r'\\zihao\{5\}', pre)
-        has_song = re.search(r'\\songti', pre)
-        if not (has_size and has_song):
-            errs.append(f'T-4 表格未用五号宋体（line ~{tex[:m.start()].count(chr(10))+1}）：应 \\songti\\zihao{{5}}')
+        if not (re.search(r'\\zihao\{5\}', pre) and re.search(r'\\songti', pre)):
+            errs.append(f'T-4 表格未用五号宋体（line ~{line_no}）：应 \\songti\\zihao{{5}}')
             ok = False
+        hit = tab_font_bad.findall(m.group(2))
+        if hit:
+            errs.append(f'T-4 表内出现非宋体/非新罗马字体命令（line ~{line_no}）：{hit[0]}；'
+                        f'表内中文五号宋体、西文/数字五号新罗马，禁止 \\heiti/\\sffamily 等切换（\\texttt 仅限附录A文件名）')
+            ok = False
+    tf = re.search(r'\\(?:newcommand|renewcommand|providecommand)\s*\{\\tabfont\}\s*\{((?:[^{}]|\{[^{}]*\})*)\}', tex)
+    if tf and not (r'\songti' in tf.group(1) and r'\zihao{5}' in tf.group(1)):
+        errs.append('T-4 \\tabfont 定义须为 \\songti\\zihao{5}（表内中文五号宋体、西文五号新罗马）')
+        ok = False
 
-    # ---- T-5 三线表：booktabs ----
+    # ---- T-5 表格线型：符号说明表必须三线表（booktabs，无竖线）；其余表格线型按内容选择 ----
     if r'\usepackage{booktabs}' not in tex:
-        errs.append('T-5 缺少 \\usepackage{booktabs}（三线表）')
+        errs.append('T-5 缺少 \\usepackage{booktabs}（符号说明表为三线表）')
         ok = False
     if re.search(r'\\begin\{(tabular\*?|longtable)\}', tex) and not re.search(r'\\toprule', tex):
-        errs.append('T-5 表格未使用 \\toprule（三线表）')
+        errs.append('T-5 全文未使用 \\toprule（符号说明表必须为三线表）')
         ok = False
+    sym_m = re.search(r'\\section\{符号说明\}(.*?)(?=\\section\{|\Z)', tex, re.S)
+    for m in re.finditer(r'\\begin\{(tabular\*?|longtable)\}\s*\{', tex):
+        spec = extract_col_spec(tex, m.end() - 1)
+        if '|' not in spec:
+            continue
+        line_no = tex[:m.start()].count('\n') + 1
+        if sym_m and sym_m.start() <= m.start() < sym_m.end():
+            errs.append(f'T-5 符号说明表列定义含竖线 |（line ~{line_no}）：'
+                        f'符号说明表必须为三线表，只允许 \\toprule/\\midrule/\\bottomrule，不得使用竖线')
+            ok = False
+        # 其余表格允许竖线（全框线表）；线型按内容选择，不强制全文统一
 
     # ---- T-5b longtable 跨页续表完整性：四件套 + 续页标题带表号 + 仅末页一条底线 ----
     # 硬性：endfirsthead / endhead / endfoot / endlastfoot 缺一即 FAIL；
@@ -252,7 +280,9 @@ def check(tex, path):
     # ---- T-8 模型章外层结构（参数化骨架）：每问独立成章，标题形如
     #      "（核心模型名）的构建与求解——问题X"（"问题X"可在标题任意位置，
     #      "构建与求解"/"建立与求解"均可），中文序号按题面从"一"起连续；
-    #      每问章内含 \subsection{模型建立} 与 \subsection{模型求解} 且建立在前 ----
+    #      章内二级标题按该问建模成分命名：≥2 个 \subsection、章内须有求解叙述
+    #      与结果证据（闭环内容检查，不查标题字面），且不得使用空壳二级标题
+    #      （含"问题X结论"式无建模信息标题；见 chapters/05 模式库与骨架不变量）----
     numerals = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二']
     sec_re = re.compile(r'\\section\{([^}]*)\}')
     sec_positions = [(m.start(), m.group(1)) for m in sec_re.finditer(tex)]
@@ -270,6 +300,7 @@ def check(tex, path):
         if numbers != list(range(1, len(numbers) + 1)):
             errs.append('T-8 问题章未按题面从"一"起连续编号（实际：%s）' % ' / '.join(t for _, _, t in prob_secs))
             ok = False
+        all_subs = []
         for i, (num, pos, title) in enumerate(prob_secs):
             next_pos = None
             for p2, _t2 in sec_positions:
@@ -277,16 +308,56 @@ def check(tex, path):
                     next_pos = p2
                     break
             block = tex[pos:next_pos] if next_pos else tex[pos:]
-            has_build = re.search(r'\\subsection\{模型建立\}', block)
-            has_solve = re.search(r'\\subsection\{模型求解\}', block)
-            if not (has_build and has_solve):
-                errs.append('T-8 问题%s章（%s）缺少 \\subsection{模型建立}/\\subsection{模型求解} 二分层' % (numerals[num - 1], title))
+            # 求解/结果以章内容存在为准，不查标题字面（见 chapters/05 求解去向三选一与骨架不变量）；
+            # 排除一级标题行本身（标题含"求解"会令求解检查恒真）
+            body_start = block.find('\n')
+            block_body = block[body_start + 1:] if body_start >= 0 else block
+            subs = re.findall(r'\\subsection\{([^}]*)\}', block)
+            all_subs.extend(set(subs))
+            if len(subs) < 2:
+                errs.append('T-8 问题%s章（%s）二级标题少于 2 个；应按建模成分分设小节' % (numerals[num - 1], title))
                 ok = False
-            elif has_build.start() > has_solve.start():
-                errs.append('T-8 问题%s章内"模型建立"应位于"模型求解"之前' % numerals[num - 1])
+            has_solve = re.search(r'拟合|求解|估计|搜索|迭代|枚举|最小二乘|回归', block_body)
+            has_result = (r'\ref{fig:' in block_body) or ('\\begin{table}' in block_body) \
+                or ('\\begin{longtable}' in block_body) or re.search(r'解得|拟合得|最优值|最优解', block_body)
+            if not (has_solve and has_result):
+                errs.append('T-8 问题%s章（%s）缺少求解叙述或结果证据（结果表/图/数值方程）；'
+                            '应形成建模—求解—结果闭环（见 chapters/05 模式库与骨架不变量）' % (numerals[num - 1], title))
+                ok = False
+            hollow = [s for s in subs if s in ('模型建立', '模型求解', '结果分析', '模型求解与结果', '求解与结果分析')
+                      or re.fullmatch(r'问题[一二三四五六七八九十]+结论', s)]
+            if hollow:
+                errs.append('T-8 问题%s章（%s）使用空壳二级标题：%s；应按模式库以建模成分命名（见 chapters/05）' % (numerals[num - 1], title, '、'.join(hollow)))
                 ok = False
             if re.search(r'\\paragraph\{', block):
                 errs.append('T-8 模型章标题层级超过三级；请将 paragraph 内容并入三级标题或正文')
+                ok = False
+        # 跨问题章同构二级标题 → WARN（不阻断 exit code）
+        seen = {}
+        for s in all_subs:
+            seen[s] = seen.get(s, 0) + 1
+        dups = sorted(s for s, c in seen.items() if c >= 2)
+        if dups:
+            print('  [WARN] T-8 跨问题章同构二级标题：%s；应按模式库以建模成分改名' % '、'.join(dups))
+
+    # ---- T-11 灵敏度分析与模型检验章：必设独立一级章节（排全部问题章之后），
+    #      章内须有实质检验内容（扫描/扰动表或表图锚点引用），防一句话糊弄 ----
+    sens_secs = [(pos, t) for pos, t in sec_positions if ('灵敏度' in t) or ('检验' in t and '模型评价' not in t)]
+    if not sens_secs:
+        errs.append('T-11 未找到"灵敏度分析与模型检验"一级章节；该章必设（见 chapters/05b，取消须在 plan.md 记录理由）')
+        ok = False
+    else:
+        for pos, title in sens_secs:
+            next_pos = None
+            for p2, _t2 in sec_positions:
+                if p2 > pos:
+                    next_pos = p2
+                    break
+            block = tex[pos:next_pos] if next_pos else tex[pos:]
+            has_evidence = re.search(
+                r'\\begin\{(?:tabular|tabularx|longtable)\}|\\ref\{(?:tab|fig):', block)
+            if not has_evidence:
+                errs.append('T-11 检验章（%s）无实质内容：应含灵敏度/扰动表或表图锚点引用（\\ref{tab:...}/\\ref{fig:...}）' % title)
                 ok = False
 
     # ---- T-9 公式分区/分组左花括号：同一 equation 出现 ≥2 个等号（链式 a=b=c、逗号/\\qquad 并列），

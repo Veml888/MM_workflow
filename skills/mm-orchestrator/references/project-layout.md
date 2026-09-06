@@ -34,7 +34,7 @@ PROJECT_ROOT/
 │   ├── *.tex + *.pdf + *_600dpi.png # 流程/框架图（可选 *.svg）
 └── paper/                         # 论文（LaTeX 为主）
     ├── structure-plan.md          # 策划：章节骨架与逐问论证链（编排器产出）
-    ├── page-budget.json           # 策划：目标28~29页、允许27~30页的机器可读预算
+    ├── page-budget.json           # 策划：目标28~29页、允许25~30页的机器可读预算
     ├── figure-requirements.md     # 策划：插图需求清单（编排器建骨架、图件 skill 填入）
     ├── writing-gates.md           # 论文终稿前 G-1~G-5 门禁记录
     ├── draft-baseline.tex         # 可选：调用前已有初稿的只读基线

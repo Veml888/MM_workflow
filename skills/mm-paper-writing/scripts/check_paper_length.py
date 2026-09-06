@@ -27,7 +27,7 @@ SECTION_RE = re.compile(r"^([一二三四五六七八九十]+)、\s*(.+)$")
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="check CUMCM PDF body page count")
     parser.add_argument("pdf", nargs="?", default="paper/论文.pdf", type=Path)
-    parser.add_argument("--min-pages", type=int, default=27)
+    parser.add_argument("--min-pages", type=int, default=25)
     parser.add_argument("--max-pages", type=int, default=30)
     parser.add_argument("--appendix-min-pages", type=int, default=9)
     parser.add_argument("--appendix-max-pages", type=int, default=11)

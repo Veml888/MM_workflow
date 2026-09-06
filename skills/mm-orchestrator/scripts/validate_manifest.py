@@ -85,14 +85,15 @@ def validate(manifest: dict) -> list[str]:
                 for field in (
                     "planned_body_pages", "final_body_pages", "length_audit",
                     "content_gap_report", "compile_passes",
+                    "read_receipt", "writing_audit", "review_findings", "review_audit",
                 ):
                     if paper_final.get(field) in (None, ""):
                         fail(errors, f"stages.paper_final.{field} is required when complete")
                 if paper_final.get("planned_body_pages") not in {28, 29}:
                     fail(errors, "stages.paper_final.planned_body_pages must be 28 or 29")
                 final_pages = paper_final.get("final_body_pages")
-                if not isinstance(final_pages, int) or not 27 <= final_pages <= 30:
-                    fail(errors, "stages.paper_final.final_body_pages must be an integer in [27, 30]")
+                if not isinstance(final_pages, int) or not 25 <= final_pages <= 30:
+                    fail(errors, "stages.paper_final.final_body_pages must be an integer in [25, 30]")
                 passes = paper_final.get("compile_passes")
                 if not isinstance(passes, int) or passes < 2:
                     fail(errors, "stages.paper_final.compile_passes must be >= 2")

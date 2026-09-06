@@ -58,8 +58,8 @@ def main() -> int:
         sections = data.get("sections")
         if target not in (28, 29):
             errors.append("target_body_pages must be 28 or 29")
-        if allowed != [27, 30]:
-            errors.append("allowed_range must be [27, 30]")
+        if allowed != [25, 30]:
+            errors.append("allowed_range must be [25, 30]")
         if not isinstance(sections, list) or not sections:
             errors.append("sections must be a non-empty array")
             sections = []

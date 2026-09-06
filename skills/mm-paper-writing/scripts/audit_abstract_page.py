@@ -14,10 +14,6 @@ if hasattr(sys, "stderr") and hasattr(sys.stderr, "reconfigure"):
 # --- /UTF-8 输出保护 ---
 import json
 import re
-import shutil
-import subprocess
-import tempfile
-import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
@@ -47,7 +43,6 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--pdf", required=True, type=Path)
     parser.add_argument("--abstract-tex", required=True, type=Path)
-    parser.add_argument("--pdftotext", type=Path)
     parser.add_argument("--margin-cm", type=float, default=2.54)
     parser.add_argument("--min-fill", type=float, default=0.78)
     parser.add_argument("--max-fill", type=float, default=0.90)
@@ -62,44 +57,33 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def find_pdftotext(explicit: Path | None) -> str:
-    if explicit:
-        return str(explicit)
-    found = shutil.which("pdftotext") or shutil.which("pdftotext.exe")
-    if not found:
-        raise FileNotFoundError("pdftotext not found; pass --pdftotext")
-    return found
+def first_page_words(pdf: Path) -> tuple[float, float, list[dict[str, object]]]:
+    """Return (page_width_pt, page_height_pt, words) for page 1 via PyMuPDF.
 
-
-def first_page_words(pdf: Path, pdftotext: str) -> tuple[float, float, list[dict[str, object]]]:
-    with tempfile.TemporaryDirectory(prefix="cumcm-abstract-") as tmp:
-        bbox = Path(tmp) / "page.xml"
-        subprocess.run(
-            [pdftotext, "-f", "1", "-l", "1", "-bbox-layout", str(pdf), str(bbox)],
-            check=True,
-            capture_output=True,
-        )
-        root = ET.parse(bbox).getroot()
-
-    page = next(node for node in root.iter() if node.tag.endswith("page"))
-    width = float(page.attrib["width"])
-    height = float(page.attrib["height"])
-    words: list[dict[str, object]] = []
-    for node in page.iter():
-        if not node.tag.endswith("word"):
-            continue
-        text = "".join(node.itertext()).strip()
-        if not text:
-            continue
-        words.append(
+    fitz 的 get_text("words") 与 poppler `pdftotext -bbox-layout` 同为顶部原点、
+    单位 pt、按空白切词，坐标语义一致，故下游测量逻辑无需改动。
+    """
+    try:
+        import fitz  # type: ignore
+    except ImportError as exc:
+        raise SystemExit("PyMuPDF (fitz) is not installed") from exc
+    with fitz.open(str(pdf)) as doc:
+        if doc.page_count < 1:
+            raise ValueError(f"pdf has no pages: {pdf}")
+        page = doc[0]
+        width = float(page.rect.width)
+        height = float(page.rect.height)
+        words = [
             {
-                "text": text,
-                "x_min": float(node.attrib["xMin"]),
-                "y_min": float(node.attrib["yMin"]),
-                "x_max": float(node.attrib["xMax"]),
-                "y_max": float(node.attrib["yMax"]),
+                "text": str(item[4]),
+                "x_min": float(item[0]),
+                "y_min": float(item[1]),
+                "x_max": float(item[2]),
+                "y_max": float(item[3]),
             }
-        )
+            for item in page.get_text("words")
+            if str(item[4]).strip()
+        ]
     return width, height, words
 
 
@@ -127,8 +111,7 @@ def group_lines(words: list[dict[str, object]], tolerance: float = 2.0) -> list[
 
 def main() -> int:
     args = parse_args()
-    pdftotext = find_pdftotext(args.pdftotext)
-    _, page_height, words = first_page_words(args.pdf, pdftotext)
+    _, page_height, words = first_page_words(args.pdf)
     tex = args.abstract_tex.read_text(encoding="utf-8")
 
     # Ignore the isolated footer page number when locating abstract content.
