@@ -1,6 +1,6 @@
 # MM_workflow — 数学建模全流程工作流（CUMCM）
 
-一套面向 **全国大学生数学建模竞赛（CUMCM）** 的 **Skills 工作流集合**。它把"读题 → 建模 → 编程 → 制图 → 截图 → 验收"整条链路拆成 9 个可复用的 skill，每个 skill 负责一个阶段，并通过 `project-manifest.json` 和 `plan.md` 交接，确保全流程产物一致、可复现、可验收。
+一套面向 **全国大学生数学建模竞赛（CUMCM）** 的 **Skills 工作流集合**。它把"读题 → 建模 → 编程 → 制图 → 论文 → 验收"整条链路拆成 9 个可复用的 skill，每个 skill 负责一个阶段，并通过 `project-manifest.json` 和 `plan.md` 交接，确保全流程产物一致、可复现、可验收。
 
 > 本仓库是 **Skills 定义本身**（即"工作流怎么跑"），不是某一次的赛题成果。用它来跑一道真实赛题，会得到一个完整的项目目录（报告、图、代码、结果）。
 
@@ -32,19 +32,20 @@
 | `mm-problem-analysis` | 赛题分析与交接 | `docs/01-analysis-report.md`、更新 manifest |
 | `mm-modeling` | 建模与求解设计 | `docs/02-modeling-report.md`、manifest 交接 |
 | `mm-coding` | 编程实现 | `code/`、`results/`、`docs/03-results-report.md` |
-| `mm-figures` | 数据图表 | 折线/柱状/散点/热力/箱线/曲面/灵敏度/误差图（PDF/SVG/PNG） |
+| `mm-figures` | 数据图表 | 折线/柱状/散点/热力/箱线/曲面/灵敏度/误差/多帧仿真图，支持多面板组合图单文件交付（PDF/SVG/PNG） |
 | `mm-graphics` | 非数据图（示意图/流程图/机理图） | TikZ 源 + 矢量 PDF + 600DPI PNG，不用 AI 图像生成 |
 | `mm-model-dictionary` | 模型知识库与适配评估 | 共享 BZD 模型字典、适配自查表（不代替选型） |
 | `mm-orchestrator` | 全流程编排入口 | `plan.md`、`todo.md`、manifest、计划与图需求 |
 | `mm-paper-writing` | 论文撰写 | LaTeX 论文（`paper/论文.tex|pdf`） |
 | `mm-verification` | 交付验收 | 全流程完整性 / 可复现性 / 格式审计 |
 
-> **固定约定**：编程语言为 **Python**（除非显式要求 MATLAB）；跨阶段不变量见 `mm-orchestrator/references/cumcm-shared-policy.md`；机器可读交接见 `project-manifest.schema.json`。
+> **固定约定**：编程语言固定为 **Python**；跨阶段不变量见 `mm-orchestrator/references/cumcm-shared-policy.md`；机器可读交接见 `project-manifest.schema.json`。
 
 ## 目录结构
 
 ```
 MM_workflow/
+├── .gitattributes           # 统一 LF 行尾与二进制文件声明
 ├── .gitignore                # 排除 LaTeX 编译产物 / Python 缓存
 ├── README.md
 ├── LICENSE
