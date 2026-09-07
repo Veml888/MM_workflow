@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0",
+  "skill": "mm-verification",
+  "required_before_reading": [
+    "SKILL.md",
+    "references/ai-details-spec.md",
+    "../mm-orchestrator/references/cumcm-shared-policy.md",
+    "../mm-orchestrator/references/project-manifest-contract.md",
+    "../mm-orchestrator/references/paper-final-checks.md",
+    "../mm-orchestrator/references/checkpoint-gates.md",
+    "../mm-problem-analysis/references/quality-gates.md",
+    "../mm-paper-writing/references/writing-order.json"
+  ],
+  "reread_before_step": {
+    "step1_audit": ["../mm-orchestrator/references/checkpoint-gates.md"],
+    "step4_paper_audit": ["../mm-paper-writing/references/writing-order.json"],
+    "step5_rework": ["../mm-orchestrator/references/cumcm-shared-policy.md"]
+  },
+  "limits": {
+    "skill_max_bytes": 30000,
+    "module_max_bytes": 26000,
+    "chunk_max_bytes": 7000
+  }
+}

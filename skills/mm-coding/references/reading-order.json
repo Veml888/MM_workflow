@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "skill": "mm-coding",
+  "required_before_reading": [
+    "SKILL.md",
+    "../mm-orchestrator/references/cumcm-shared-policy.md",
+    "../mm-orchestrator/references/project-manifest-contract.md",
+    "../mm-problem-analysis/references/problem-reading-protocol.md",
+    "../mm-problem-analysis/references/data-audit-manual.md",
+    "../mm-problem-analysis/references/quality-gates.md"
+  ],
+  "reread_before_step": {
+    "step1_plan": ["../mm-problem-analysis/references/problem-reading-protocol.md"],
+    "step2_implement": ["../mm-problem-analysis/references/data-audit-manual.md"],
+    "step3_verify": ["../mm-problem-analysis/references/quality-gates.md"]
+  },
+  "limits": {
+    "skill_max_bytes": 20000,
+    "module_max_bytes": 26000,
+    "chunk_max_bytes": 7000
+  }
+}

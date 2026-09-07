@@ -1,0 +1,119 @@
+---
+name: mm-figures
+description: CUMCM 数据图表生成阶段。当用户需要把真实结果制作成论文级折线图、柱状图、散点图、热力图、箱线图、曲面图、灵敏度图、误差图或适用的多帧仿真图时使用；支持把相关结果合并为一张多面板组合图（subplots），以单文件交付。每张终稿数据图交付 PDF、SVG、PNG，并登记报告与 manifest。
+---
+
+<!-- READ-GATE:complete -->
+
+> **🛑 本阶段开工前的完整读取门禁（必做第一步）**
+>
+> **本 skill = 数据图表生成阶段（图件分支 5a）**。从你打开这份 SKILL.md 的那一刻起，下面这些动作**全都算"开工"**——任一动作之前都**必须**先按共享 read-protocol 读完本 skill 注册表里的全部 7 个文件，并拿到 `verify` exit 0：
+>
+> - 读上游 `docs/03-results-report.md` / `results/` / `paper/structure-plan.md` / `paper/figure-requirements.md` 任何产物
+> - 查 `references/chart-type-catalog.md` / `references/figure-style-guide.md`
+> - 写任何代码生成图 / 渲染 `figures/*.png|.pdf|.svg` / 填 `paper/figure-requirements.md` 数据图区
+> - 跑 `scripts/check_figure_overlap.py` / `validate_paper_plan.py` 等任何脚本
+>
+> **`read_complete.py` 不是"检测脚本"——它是"强制读完 + 检测"组合机制**（chunk 子命令**强制按块打到 stdout**、write-receipt + verify **强制记账与三层 SHA256 锁定**）。跳过任何一块都会让 verify exit ≠ 0，**"声称读过"就站不住脚**。
+>
+> ```bash
+> # Step 1: plan（7 文件 / 11 块 / ~48 KB）
+> python <mm-orchestrator目录>/scripts/read_complete.py plan --skill mm-figures
+>
+> # Step 2: chunk
+> echo '{"schema_version":"1.0","reads":[]}' > .read-session.json
+> python <mm-orchestrator目录>/scripts/read_complete.py chunk \
+>     --skill mm-figures \
+>     --path <rel> --start N --end M \
+>     --session .read-session.json
+>
+> # Step 3: write-receipt
+> python <mm-orchestrator目录>/scripts/read_complete.py write-receipt \
+>     --skill mm-figures --pass 1 \
+>     --receipt skill-read-receipt.json --session .read-session.json
+>
+> # Step 4: verify（exit 0 才算 PASS）
+> python <mm-orchestrator目录>/scripts/read_complete.py verify \
+>     --skill mm-figures \
+>     --receipt skill-read-receipt.json --session .read-session.json
+> ```
+>
+> 共享协议完整文档：`../mm-orchestrator/references/read-protocol.md`
+> 本 skill 的注册表：`references/reading-order.json`（7 文件 / 11 块 / ~48 KB）。
+
+<!-- /READ-GATE -->
+
+# 数学建模：数据图表生成
+
+本 skill 是图件制作阶段的**数据图**分支。目标：把 `results/` 里的数值结果变成可嵌入 LaTeX 论文的出版级数据图。只画"数据图"；非数据图（逻辑/框架/机理图、场景/空间精确示意图）由 `mm-graphics` 负责。
+
+## 一、定位与边界（本 skill 做什么、不做什么）
+
+- **负责**：把 `results/` 里已有的数值结果 → 出版级数据图。数据图是"展示模型求解结果、或对结果做分析/研究（检验、灵敏度、鲁棒性、多方案对比、多帧演化）"的图。
+- **不负责**：
+  - 技术路线图 / 流程图 / 模型结构图 / 机理示意图 → `mm-graphics`；
+  - 重新计算数值结果 → 只可视化 `results/` 里已有的数，不改结果数值；发现数据异常回写 `mm-coding` 核实，不在图阶段擅自修改；
+  - 正文图总量、最终锚点 → `mm-paper-writing` 统筹，本 skill 只对实际需要的数据图负责。
+
+**输入**：`docs/03-results-report.md`（必须）、`results/`、`paper/structure-plan.md`（论证链与锚点）、`paper/figure-requirements.md`（骨架，填入"数据图"区）。
+**产出**：`figures/*.png`（嵌入用，另存矢量 `.pdf` 与 `.svg`）、`docs/04-figures-report.md`（必须），并把确定的数据图写入 `paper/figure-requirements.md` 的"数据图"区。**组合图 = 一张图一个文件**：有关联的多个结果面板合并为一个 `.pdf`/`.svg`/`.png`（三格式同名），登记为单条 `FIG-###`，图内 `(a)(b)(c)...` 面板分别对应不同结论锚点；除非正文确实需要单独引用某个面板，否则不拆成多个文件。
+
+开始前必须确认 `project-manifest.json` 中 `stages.paper_plan.status=complete`，且运行 `python <mm-orchestrator目录>/scripts/validate_paper_plan.py paper/page-budget.json --root .` exit 0。初始化空骨架、未审计初稿或未闭合到 28～29 页的计划不得用于终稿图件制作。
+
+跨阶段不变量遵循 `../mm-orchestrator/references/cumcm-shared-policy.md`；逐图稳定 ID、来源结果 ID、正文锚点、格式、哈希和版本写入 `project-manifest.json`。
+
+## 二、工作流（先决定画哪些，再动手画）
+
+> 本 skill 的主线是**先动脑决定"画什么"（Step 1），再动手"怎么画"（Step 2），最后登记说明（Step 3）**。细则按需查 references：**选图标准与图种**见 `references/chart-type-catalog.md`，**样式规范与设计原则**见 `references/figure-style-guide.md`（后者含配色/字体/字号/多面板布局/文字重叠/导出/检查清单）。
+
+### Step 1：综合前文，决定要画哪些数据图（并决定谁合并成组合图）
+
+读取 `docs/03-results-report.md`（含"供图表阶段使用的候选结果清单"）、`paper/structure-plan.md`（论证链与正文锚点）和 `results/`，综合决定数据图集合——哪些结果值得画、画什么图种与维度、放哪个正文锚点、服务哪条结论。决定后写入 `paper/figure-requirements.md` 的"数据图"区（每图：类型、核心用途、来源结果 ID、候选正文锚点、推荐宽度、负责 skill = `mm-figures`），并输出图清单：
+
+```text
+FIGURE PLAN:
+[ ] 成本曲面.png      成本随(位置x,位置y)变化（3D 曲面）
+[ ] 多方案对比.png    多方案对比（分组柱状）
+[ ] 参数灵敏度.png    参数灵敏度（折线+误差棒）
+[ ] 目标函数等高线.png    目标函数等高线（2D 等高线，多维度）
+[ ] 演化初始状态.png     仿真第 0 帧情形（2D）
+[ ] 演化中间状态3D.png  仿真第 10 帧情形（3D，可选）
+```
+
+清单按题面实际增删。**本 skill 不设数据图最低数量，也不要求每问都画**；仅当某个子问题存在能支持核心结论的数据时，才为该问制作数据图——每张必须有明确叙事作用（一图一结论），禁止为凑数硬画或重复拆图。需要撑满正文图量（如"数据图不少于 12 张"）属正文锚点级约束，由 `mm-paper-writing` 统筹，本 skill 只确保每张交付的图都有独立结论。
+
+**选什么图种、用哪种维度**（折线/柱状/散点/热力/3D/多帧等）：查 `references/chart-type-catalog.md` 的"选图标准 + 常规/创新图种表"，按数据与结论匹配，不要整篇只有柱状图 + 折线图，也不要为凑图种硬上不合适的图。
+
+### 组合图判定（决定"谁合并成一张组合图、谁单独成图"）
+
+> 这是"何时用组合图"的唯一判据，集中在此。**先合并、再决定单张**——有关联才合并，无关硬拼反而拖垮可读性。
+
+1. **该合并**：多个子图围绕同一结论、且放在同一正文锚点相邻位置时，优先合并成一张组合图。典型场景——同一模型在不同假设/方案下的结果对比、同一指标随多个参数的变化、多帧演化、不同阶段的检验结果、同一维度下误差带/置信带对照。合并能减少正文浮动图总量，让"多个面板为一套结论"更紧凑。
+2. **该拆开**：各面板结论独立、需在不同正文小节分别引用；或某面板本身信息量大、独占一行阅读更清晰；或不同面板宽度/长宽比差异过大、硬拼会挤变形。
+3. **面板数量约束**：一张组合图 ≤ 4 个面板为佳（1×2、2×2、1×3、2×3 视信息量），超过 4 个面板需重新考虑是合并还是拆成"主图 + 补充图"。每个面板仍须"一图一结论"，组合图不等于信息堆砌。
+4. **多帧 = 组合图特例**：时间演化/空间演化/迭代问题用"帧"= 面板表达，统一坐标范围与配色、帧序号标注图内，作为**单一组合图文件**交付（一个 PDF/SVG/PNG，登记一条 `FIG-###`），不逐帧拆文件。
+5. **面板编排与共享**：组合图内凡度量一致就共享 y/x 轴、收敛图例/标题到整张图；每面板标 `(a)(b)(c)...`，配色跨面板一致。**具体的布局模板、`fig.subplots` 用法、`sharey`、面板标记坐标与间距防重叠见 `references/figure-style-guide.md`「画布与字号 / 文字重叠防复发」**，此处只定方向、不重复实现细节。
+
+### Step 2：按样式规范出图
+
+严格套用 `references/figure-style-guide.md`：配色、字体分工（中文宋体/西文新罗马）、字号、多面板/子图布局、DPI、图例、边框；组合图/多帧/3D 的具体实现该文件与 `chart-type-catalog.md` 为准，此处不重复。
+
+出图后回读 PNG/PDF 检查标签是否压线/压柱/压点，重合即返工；再运行 `python <mm-figures目录>/scripts/check_figure_overlap.py --dir figures/`：`[OVERLAP]`（文字-文字重叠）必须为 0，`[DATA-CAND]`（文字可能压数据图形）逐条人工终判真伪，必要时 `--strict-data` 卡严。每张终稿图（含每张组合图）导出 PDF + SVG + PNG 三种格式，PNG 分辨率见该文件（≥300 DPI，多面板 ≥420）。
+
+### Step 3：写图表说明
+
+写 `docs/04-figures-report.md`，逐图记录：稳定 ID、文件名、三种格式、图种、维度、展示内容、来源结果 ID、对应正文锚点和版本；同步更新 `project-manifest.json`。**组合图登记为一条 `FIG-###`（`kind` 记为 `combo` 或 `multi-panel`），`source_result_ids` 列全部面板来源结果，`paper_anchor` 写主锚点并注明各 `(a)(b)(c)` 面板对应的小节/结论锚点**；面板级锚点在 `docs/04` 中逐面板展开，正文引用用组合图的整张图题（见图题规范 `references/figure-style-guide.md`）。
+
+## 六、硬性要求（不可违背的底线）
+
+本节是必须满足的下限，与选图标准、样式规范配合；冲突时以本节为准。
+
+1. **3D 图可选**：仅当数据确实适合三维展示（两个自变量 → 一个因变量、三维解空间、需同时表达三维信息）时才用；不适合时不要为凑数硬画。
+2. **选图以"最能反映数据 + 让评委眼前一亮"为标准**：优先与数据特征最匹配、表达力最强的图种（一图一结论）；在常规图上做精细化与组合创新，但不为炫技牺牲可读性与准确性。
+3. **多帧仿真展示**：只有时间演化、空间演化或迭代问题才要求多帧；每个适用子问题展示初始、关键中间与终止状态，二维视角必给，三维仅在数据适合时采用。**多帧以一张组合图交付**（面板 = 帧，单一文件），不逐帧拆文件。
+4. **字体可读**：所有文字在论文版面中必须清晰可读；字号与字体分工见 `references/figure-style-guide.md`（中文宋体、西文/数字 Times New Roman）。
+5. **样式红线**：白底黑字、高对比配色；重要类别同时用颜色、线型或点形冗余编码；每张终稿图（含每张组合图）导出 PDF + SVG + PNG，PNG ≥300 DPI，多面板推荐 420 DPI；组合图单文件交付、三格式同名。
+6. **文字重叠零容忍**：数据标签、节点编号、图例和关键标注不得压住图形元素或其他文字。导出后运行 `<mm-figures目录>/scripts/check_figure_overlap.py` 并视觉回读，发现重合即返工。
+7. **命名规范**：图文件名与图内标题不得带"问题一/二/三、Q1/Q2、q1/q2"等编号前缀，使用描述性内容名称；论文图题同步遵守。**组合图文件名用整体结论命名（如 `参数灵敏度对比`），图内面板用 `(a)(b)(c)...` 区分，不在文件名里带面板编号**。
+8. **数据图用途**：数据图主要用于**展示模型求解的结果**，或对结果的**分析/研究**（检验、灵敏度、鲁棒性、多方案对比、多帧演化）。不是数据结果或结果分析的不算数据图（归 `mm-graphics`）。每张仍须"一图一结论"，禁止为凑数硬画无信息图。**本 skill 不设数据图最低数量**；需撑满正文图量的锚点级要求由 `mm-paper-writing` 统筹。
+9. **基础图种数量约束（硬性 ≤2）**：普通基础图种（柱状/折线/散点/饼图/雷达/直方）每个子问题内**合计 ≤ 2 种**；超出部分必须用组合图（多面板）或创新/进阶图种（子图、双轴、误差带、3D、等高线、热力、帕累托、瀑布、桑基等）承载。细则及例外见 `references/chart-type-catalog.md` §一「基础图种数量约束」。

@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "skill": "mm-figures",
+  "required_before_reading": [
+    "SKILL.md",
+    "references/chart-type-catalog.md",
+    "references/figure-style-guide.md",
+    "../mm-orchestrator/references/cumcm-shared-policy.md",
+    "../mm-orchestrator/references/figure-boundary.md",
+    "../mm-orchestrator/references/checkpoint-gates.md"
+  ],
+  "reread_before_step": {
+    "step1_type": ["references/chart-type-catalog.md"],
+    "step2_render": ["references/figure-style-guide.md"],
+    "step4_audit": ["../mm-orchestrator/references/figure-boundary.md"]
+  },
+  "limits": {
+    "skill_max_bytes": 20000,
+    "module_max_bytes": 26000,
+    "chunk_max_bytes": 7000
+  }
+}

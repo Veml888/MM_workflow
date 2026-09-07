@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "skill": "mm-graphics",
+  "required_before_reading": [
+    "SKILL.md",
+    "references/line-art-syntax.md",
+    "references/implementation-spec.md",
+    "../mm-orchestrator/references/cumcm-shared-policy.md",
+    "../mm-orchestrator/references/figure-boundary.md",
+    "../mm-orchestrator/references/checkpoint-gates.md"
+  ],
+  "reread_before_step": {
+    "step1_route": ["references/line-art-syntax.md"],
+    "step2_design": ["references/implementation-spec.md"],
+    "step4_audit": ["../mm-orchestrator/references/figure-boundary.md"]
+  },
+  "limits": {
+    "skill_max_bytes": 20000,
+    "module_max_bytes": 26000,
+    "chunk_max_bytes": 7000
+  }
+}

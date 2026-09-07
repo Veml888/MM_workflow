@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "skill": "mm-orchestrator",
+  "required_before_reading": [
+    "SKILL.md",
+    "references/orchestrator-quickcard.md",
+    "references/stage-pipeline.md",
+    "references/paper-plan-spec.md",
+    "references/page-budget-schema.md",
+    "references/paper-final-checks.md",
+    "references/draft-takeover.md",
+    "references/figure-boundary.md",
+    "references/checkpoint-gates.md",
+    "references/cumcm-shared-policy.md",
+    "references/project-layout.md",
+    "references/project-manifest-contract.md"
+  ],
+  "reread_before_step": {
+    "step3_init": ["references/orchestrator-quickcard.md", "references/checkpoint-gates.md"],
+    "step4_paper_plan": ["references/paper-plan-spec.md", "references/page-budget-schema.md", "references/draft-takeover.md", "references/figure-boundary.md"],
+    "step4_paper_final": ["references/paper-final-checks.md", "references/draft-takeover.md"]
+  },
+  "limits": {
+    "skill_max_bytes": 12000,
+    "module_max_bytes": 26000,
+    "chunk_max_bytes": 7000
+  }
+}

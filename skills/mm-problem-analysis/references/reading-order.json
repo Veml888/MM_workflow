@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "skill": "mm-problem-analysis",
+  "required_before_reading": [
+    "SKILL.md",
+    "references/problem-reading-protocol.md",
+    "references/problem-taxonomy.md",
+    "references/model-selection-library.md",
+    "references/case-cards.md",
+    "references/data-audit-manual.md",
+    "references/analysis-report-template.md",
+    "references/quality-gates.md",
+    "../mm-orchestrator/references/cumcm-shared-policy.md",
+    "../mm-orchestrator/references/project-manifest-contract.md"
+  ],
+  "reread_before_step": {
+    "step0_reading": ["references/problem-reading-protocol.md", "references/quality-gates.md"],
+    "step2_5_audit": ["references/data-audit-manual.md"],
+    "step3_typing": ["references/problem-taxonomy.md", "references/model-selection-library.md"],
+    "step4_candidates": ["references/model-selection-library.md", "references/case-cards.md"],
+    "step6_report": ["references/analysis-report-template.md", "references/quality-gates.md"]
+  },
+  "limits": {
+    "skill_max_bytes": 20000,
+    "module_max_bytes": 26000,
+    "chunk_max_bytes": 7000
+  }
+}
